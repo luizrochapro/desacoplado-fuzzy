@@ -202,3 +202,7 @@ for r in range(0,d.nr):
     #Calculo das perdas de ramos
     Pperdas[r] = Pkm[r]+Pmk[r]
     Qperdas[r] = Qkm[r]+Qmk[r]
+
+#Imprimir vetor de tensão de barra e ângulo de tensao
+print(np.around(d.vb,4))
+print(np.around((180/np.pi)*d.ab,3))
