@@ -3,6 +3,7 @@
 #  Eng. Luiz Gonzaga Rocha Junior                                            #
 #  contato@luizrocha.eng.br                                                  #
 ##############################################################################
+#coding: utf-8
 
 from DadosEntrada import *
 
