@@ -123,7 +123,7 @@ while (iter < 100):
         if Kq == 0:
             break  # Sai do processo iterativo
     else:  #Correção dos ângulos de tensões de barra
-        d.ab = d.ab + np.matmul(B1L,DP) # Usa conjugado de DP porque ele ï¿½ vetor linha   
+        d.ab = d.ab + np.matmul(B1L,DP)  #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         p = p + 0.5
     
 
@@ -156,7 +156,7 @@ while (iter < 100):
         if Kp == 0:
             break #Sai do processo iterativo
     else: #Correção dos módulos de tensões de barra
-        d.vb = d.vb + np.matmul(B2L,DQ) # Usa conjugado de DQ porque ele é vetor linha        
+        d.vb = d.vb + np.matmul(B2L,DQ) #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<       
               
         q = q + 0.5
     
