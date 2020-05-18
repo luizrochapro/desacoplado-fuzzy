@@ -4,6 +4,8 @@ import numpy as np
 import skfuzzy as fuzz
 
 class FuzzyInfSystem:
+    '''Nesta classe as funções de pertinencia são triangulares e as regras já estão previstas como lineares 
+       de acordo com o artigo , IF LN THEN LN'''
     
     def __init__(self, dFmax, dXmax, precisaoF, precisaoX):
         self.dFmax = dFmax
@@ -44,3 +46,28 @@ class FuzzyInfSystem:
         lp = fuzz.trimf(self.uni_dis_X, [self.dXmax/3, self.dXmax, self.dXmax])
         pert_matrix_dx = [ln,mn,sn,zr,sp,mp,lp]
         return(pert_matrix_dx)
+
+    def activate_mfs(self, mf, matrix_mfs):
+        '''Função que ativa as funções de pertinencia com a funcção de entrada'''
+        act_mfs =[]
+        for i in range(0, np.size(matrix_mfs, axis = 0)):
+            act_mfs.append(fuzz.fuzzy_and(self.uni_dis_F, mf, self.uni_dis_F, matrix_mfs[i])[1])
+        return act_mfs
+
+    def calc_mfs_saida(self, act_mfs, matrix_mfs):
+        '''Função que tranfere as mfs da entrada para saida'''
+        mfs_saida = []
+        for i in range(0, np.size(act_mfs, axis=0)):
+            mfs_saida.append(np.fmin(np.max(act_mfs[i]), matrix_mfs[i]))     
+        return mfs_saida          
+    
+    def agregar_mfs_saida(self, mfs_saida):
+        '''Função que agrega as mfs de saida'''
+        mfs_agregadas = mfs_saida[0]
+        for i in range(1, np.size(mfs_saida, axis=0)-1):
+            mfs_agregadas = np.fmax(mfs_agregadas, mfs_saida[i])
+        return mfs_agregadas
+
+    def calc_centroide(self, mfs_agregadas):
+        '''função que defuzifica as funções agregadas'''
+        return fuzz.defuzz(self.uni_dis_X, mfs_agregadas, 'centroid')
