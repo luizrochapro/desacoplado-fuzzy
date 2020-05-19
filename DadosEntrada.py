@@ -9,7 +9,7 @@ class DadosEntrada:
         self.sbase = 100.0
         self.barras = []
         self.ramos = []
-        self.cargas_fuzzy = []
+        self.barras_fuzzy = []
         self.nb = 0  # número de barras
         self.tipo_barras = [] #tipos das barras
         self.vb = [] #módulo das tensões de barra
@@ -17,6 +17,8 @@ class DadosEntrada:
         self.nr = 0 # Número de ramos
         self.bini = [] #barra início do ramo
         self.bfim = [] #barra fim do ramo
+        self.unidis = [] #universo de discurso
+        self.precisao = [] #precisão do universo de discurso
 
     def setPath(self,path):
         self.path = path
@@ -34,7 +36,9 @@ class DadosEntrada:
             "Sbase": "Sbase",
             "Barras": "Barras",
             "Ramos": "Ramos",
-            "Cargas_Fuzzy": "Cargas_Fuzzy",
+            "Barras_Fuzzy": "Barras_Fuzzy",
+            "Universo_Discurso": "Universo_Discurso",
+            "Precisao_Universo_Discurso": "Precisao_Universo_Discurso",
             "99999": "none"
         }
         return switcher.get(s,"none")
@@ -52,11 +56,15 @@ class DadosEntrada:
                 self.barras.append([float(i) for i in columns])
             if (tag == "Ramos") and (columns[0] != "Ramos" and (columns[0] != "%")):
                 self.ramos.append([float(i) for i in columns])    
-            if (tag == "Cargas_Fuzzy") and (columns[0] != "Cargas_Fuzzy" and (columns[0] != "%")):
-                self.cargas_fuzzy.append([float(i) for i in columns])
+            if (tag == "Barras_Fuzzy") and (columns[0] != "Barras_Fuzzy" and (columns[0] != "%")):
+                self.barras_fuzzy.append([float(i) for i in columns])
+            if (tag == "Universo_Discurso") and (columns[0] != "Universo_Discurso" and (columns[0] != "%")):
+                self.unidis = float(columns[0])
+            if (tag == "Precisao_Universo_Discurso") and (columns[0] != "Precisao_Universo_Discurso" and (columns[0] != "%")):
+                self.precisao = float(columns[0])
         self.barras = np.array(self.barras)
         self.ramos = np.array(self.ramos)
-        self.cargas_fuzzy = np.array(self.cargas_fuzzy)
+        self.barras_fuzzy = np.array(self.barras_fuzzy)
         self.nb = int(np.shape(self.barras)[0])
         self.tipo_barras = self.barras[:,1]
         self.vb = np.reshape(self.barras[:,2],(self.nb,1))
@@ -64,3 +72,4 @@ class DadosEntrada:
         self.nr = int(np.shape(self.ramos)[0])
         self.bini = [int(i) for i in self.ramos[:,0]]
         self.bfim = [int(i) for i in self.ramos[:,1]]
+        self.unidis = np.linspace((-1*self.unidis), self.unidis, int(2*self.unidis/self.precisao), endpoint=True, dtype=float)

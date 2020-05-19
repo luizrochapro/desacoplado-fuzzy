@@ -16,7 +16,7 @@ class FuzzyInfSystem:
         self.stepX = self.precisaoX
         num = 2
         while (self.stepF >= self.precisaoF):
-            (self.uni_dis_F, self.stepF) = np.linspace(-dFmax, dFmax, num, endpoint=True, retstep=True, dtype=float)
+            (self.uni_dis_F, self.stepF) = c
             num+=1
         num = 2
         while (self.stepX >= self.precisaoX):

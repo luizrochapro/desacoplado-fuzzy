@@ -1,6 +1,8 @@
 from FuzzyInfSystem import *
 import matplotlib.pyplot as plt
 
+
+
 f = FuzzyInfSystem(10,1,0.1,0.01)
 
 x = f.pert_funcs_df()

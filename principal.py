@@ -6,9 +6,10 @@
 #coding: utf-8
 
 from DadosEntrada import *
+from UniversoDiscurso import *
 
 #Dados de entrada
-filein = 'sis3.dat'
+filein = 'sis6.dat'
 
 # Instancia objeto dados
 d = DadosEntrada('entradas/{0}'.format(filein))
@@ -125,6 +126,9 @@ while (iter < 100):
             break  # Sai do processo iterativo
     else:  #Correção dos ângulos de tensões de barra
         d.ab = d.ab + np.matmul(B1L,DP)  #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        #--
+        #ud = UniversoDiscurso(unidis, DF, G, B, v, a, nb, nr, bini, bfim)
+        #--    
         p = p + 0.5
     
 
