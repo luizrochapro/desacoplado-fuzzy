@@ -94,3 +94,15 @@ class DadosEntrada:
             tri2 = fuzz.trimf(self.unidis,np.array([self.barras_fuzzy[k,10],self.barras_fuzzy[k,11],self.barras_fuzzy[k,12]])/self.sbase) #PL
             self.qliq.append(fuzz.dsw_sub(self.unidis,tri1,self.unidis,tri2,1000))
         return None
+
+    def p2r(self, A, phi):
+        ret_real =[]
+        ret_imag =[]
+        if len(A)==len(phi):        
+            for k in range(0,len(A)):
+                ret_real.append((A[k] * (np.cos(phi[k]) + np.sin(phi[k]) * 1j)).real)
+                ret_imag.append((A[k] * (np.cos(phi[k]) + np.sin(phi[k]) * 1j)).imag)
+            return ret_real,ret_imag
+        else:
+            print('Entrada inválida, vetores dimensões diferentes')
+            return None

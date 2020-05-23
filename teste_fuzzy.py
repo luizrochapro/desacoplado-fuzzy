@@ -33,7 +33,6 @@ print(first_nonzero(A,0))
 print(first_one(A,0))
 print(last_nonzero(A,0))
 
-
 # Apply fuzzy arithmetic 
 z1, C1 = skfuzzy.dsw_add(x, A, x, B, 1000) 
 z2, C2 = skfuzzy.dsw_sub(x, A, x, B, 31) 
