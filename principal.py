@@ -8,6 +8,7 @@
 from DadosEntrada import *
 from UniversoDiscurso import *
 
+
 #Dados de entrada
 filein = 'sis6.dat'
 
@@ -17,9 +18,11 @@ d = DadosEntrada('entradas/{0}'.format(filein))
 #carrega arquivo de entrada para o objeto dados
 d.carregar_dados()
 
-# normalização em pu dos dados de barra
-Pliq = (d.barras[:,4]-d.barras[:,6])/d.sbase # P especificado
-Qliq = (d.barras[:,5]-d.barras[:,7])/d.sbase # Q especificado
+#calcula as potências liquidas das barras em pu
+d.calc_pliq()
+d.calc_qliq()
+
+# normalização em pu dos dados de shunt
 bsh_k = d.barras[:,8]/d.sbase
 
 # normalização em pu dos dados de ramos

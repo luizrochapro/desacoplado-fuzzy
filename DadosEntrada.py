@@ -1,6 +1,8 @@
 #coding: utf-8
 
 import numpy as np
+import skfuzzy as fuzz
+import matplotlib.pyplot as plt
 
 class DadosEntrada:
 
@@ -19,6 +21,8 @@ class DadosEntrada:
         self.bfim = [] #barra fim do ramo
         self.unidis = [] #universo de discurso
         self.precisao = [] #precisão do universo de discurso
+        self.pliq = [] # PG - PL  armazena o espaço de discurso da Pliq[0] e a MF[1]
+        self.qliq = [] # QG - QL  armazena o espaço de discurso da Qliq[0] e a MF[1]
 
     def setPath(self,path):
         self.path = path
@@ -72,4 +76,21 @@ class DadosEntrada:
         self.nr = int(np.shape(self.ramos)[0])
         self.bini = [int(i) for i in self.ramos[:,0]]
         self.bfim = [int(i) for i in self.ramos[:,1]]
-        self.unidis = np.linspace((-1*self.unidis), self.unidis, int(2*self.unidis/self.precisao), endpoint=True, dtype=float)
+        #self.unidis = np.linspace((-1*self.unidis), self.unidis, int(2*self.unidis/self.precisao), endpoint=False, dtype=float)
+        self.unidis = np.linspace((-1*self.unidis),self.unidis,10001)
+
+    def calc_pliq(self):
+        '''função que calcula vetor de potências ativas liquidas'''
+        for k in range(0,self.nb):
+            tri1 = fuzz.trimf(self.unidis,np.array([self.barras_fuzzy[k,1],self.barras_fuzzy[k,2],self.barras_fuzzy[k,3]])/self.sbase) #PG
+            tri2 = fuzz.trimf(self.unidis,np.array([self.barras_fuzzy[k,7],self.barras_fuzzy[k,8],self.barras_fuzzy[k,9]])/self.sbase) #PL
+            self.pliq.append(fuzz.dsw_sub(self.unidis,tri1,self.unidis,tri2,1000))
+        return None
+
+    def calc_qliq(self):
+        '''função que calcula vetor de potências reativas liquidas'''
+        for k in range(0,self.nb):
+            tri1 = fuzz.trimf(self.unidis,np.array([self.barras_fuzzy[k,4],self.barras_fuzzy[k,5],self.barras_fuzzy[k,6]])/self.sbase) #PG
+            tri2 = fuzz.trimf(self.unidis,np.array([self.barras_fuzzy[k,10],self.barras_fuzzy[k,11],self.barras_fuzzy[k,12]])/self.sbase) #PL
+            self.qliq.append(fuzz.dsw_sub(self.unidis,tri1,self.unidis,tri2,1000))
+        return None
