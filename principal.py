@@ -7,7 +7,7 @@
 
 from DadosEntrada import *
 from UniversoDiscurso import *
-
+import skfuzzy as fuzz
 
 #Dados de entrada
 filein = 'sis6.dat'
@@ -101,10 +101,19 @@ while (iter < 100):
     # Cálculo do vetor de equações básicas (resíduos) DELTA_P
     # OBS: lembrar que injeção de potência ativa especificada = Pliq
 
-    DP = np.zeros((d.nb,1))
+    #DP = np.zeros((d.nb,1))
+    DP = []
 
     for k in range(0,d.nb):
-            DP[k] = Pliq[k] - G[k,k]*(np.square(d.vb[k]))
+            v_real = fuzz.trimf(d.unidis,d.e[k]) # criar número fuzzy a partir dos pontos do triangulo
+            v_imag = fuzz.trimf(d.unidis,d.f[k]) # criar número fuzzy a partir dos pontos do triangulo
+            univ_real, v_real_squared = fuzz.dsw_mult(d.unidis,v_real,d.unidis,v_real,30) # elevar ao quadrado
+            univ_imag, v_imag_squared = fuzz.dsw_mult(d.unidis,v_imag,d.unidis,v_imag,30) # elevar ao quadrado
+            univ_soma, soma = fuzz.dsw_add(univ_real, v_real_squared, univ_imag, v_imag_squared,30)
+            aux = round(G[k,k],0) #arredondando para cair dentro da precisão do unidis
+            conduct = fuzz.trimf(d.unidis, np.array([aux, aux, aux])) #singleton
+            univ_mult, mult = fuzz.dsw_mult(univ_soma, soma, d.unidis, conduct, 1000)
+            DP.append(fuzz.dsw_sub(d.pliq[k][0], d.pliq[k][1], univ_mult, mult,30))
 
     for r in range(0,d.nr):
         k = d.bini[r] 

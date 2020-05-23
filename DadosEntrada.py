@@ -23,6 +23,8 @@ class DadosEntrada:
         self.precisao = [] #precisão do universo de discurso
         self.pliq = [] # PG - PL  armazena o espaço de discurso da Pliq[0] e a MF[1]
         self.qliq = [] # QG - QL  armazena o espaço de discurso da Qliq[0] e a MF[1]
+        self.e = [] #parte real da tensão de barra retangular
+        self.f =[] #parte imaginaria da tensão de barra retangular
 
     def setPath(self,path):
         self.path = path
@@ -47,8 +49,20 @@ class DadosEntrada:
         }
         return switcher.get(s,"none")
 
+    def p2r(self, A, phi):
+        ret_real =[]
+        ret_imag =[]
+        if len(A)==len(phi):        
+            for k in range(0,len(A)):
+                ret_real.append((A[k] * (np.cos(phi[k]) + np.sin(phi[k]) * 1j)).real)
+                ret_imag.append((A[k] * (np.cos(phi[k]) + np.sin(phi[k]) * 1j)).imag)
+            return ret_real,ret_imag
+        else:
+            print('Entrada inválida, vetores dimensões diferentes')
+            return None
 
     def carregar_dados(self):
+        #função que carrega os dados de entrada nas propriedades dos objetos
         filein = open(self.path,'r')
         tag = "none" # variavel tag armazena em que cartão estamos
         for line in filein:
@@ -71,13 +85,20 @@ class DadosEntrada:
         self.barras_fuzzy = np.array(self.barras_fuzzy)
         self.nb = int(np.shape(self.barras)[0])
         self.tipo_barras = self.barras[:,1]
-        self.vb = np.reshape(self.barras[:,2],(self.nb,1))
-        self.ab = np.reshape(self.barras[:,3],(self.nb,1))
+        self.vb = np.reshape(self.barras[:,2:5],(self.nb,3))
+        self.ab = np.reshape(self.barras[:,5:8],(self.nb,3))
         self.nr = int(np.shape(self.ramos)[0])
         self.bini = [int(i) for i in self.ramos[:,0]]
         self.bfim = [int(i) for i in self.ramos[:,1]]
-        #self.unidis = np.linspace((-1*self.unidis), self.unidis, int(2*self.unidis/self.precisao), endpoint=False, dtype=float)
-        self.unidis = np.linspace((-1*self.unidis),self.unidis,10001)
+        self.unidis = np.linspace((-1*self.unidis), self.unidis, 10001)
+        # converter tensão de polar para retangular
+        for k in range(0,self.nb):
+            x,y = self.p2r(self.vb[k],self.ab[k])   
+            self.e.append(x)
+            self.f.append(y)
+        self.e = np.array(self.e)
+        self.f = np.array(self.f)
+
 
     def calc_pliq(self):
         '''função que calcula vetor de potências ativas liquidas'''
@@ -94,15 +115,3 @@ class DadosEntrada:
             tri2 = fuzz.trimf(self.unidis,np.array([self.barras_fuzzy[k,10],self.barras_fuzzy[k,11],self.barras_fuzzy[k,12]])/self.sbase) #PL
             self.qliq.append(fuzz.dsw_sub(self.unidis,tri1,self.unidis,tri2,1000))
         return None
-
-    def p2r(self, A, phi):
-        ret_real =[]
-        ret_imag =[]
-        if len(A)==len(phi):        
-            for k in range(0,len(A)):
-                ret_real.append((A[k] * (np.cos(phi[k]) + np.sin(phi[k]) * 1j)).real)
-                ret_imag.append((A[k] * (np.cos(phi[k]) + np.sin(phi[k]) * 1j)).imag)
-            return ret_real,ret_imag
-        else:
-            print('Entrada inválida, vetores dimensões diferentes')
-            return None

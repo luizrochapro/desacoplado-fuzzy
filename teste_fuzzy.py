@@ -26,17 +26,17 @@ maxx = 1000
 x = np.linspace(minx, maxx, N)
 
 # Create membership functions 
-A = skfuzzy.trimf(x, np.array([320,350,370])) 
-B = skfuzzy.trimf(x, np.array([0, 0, 0])) 
+A = skfuzzy.trimf(x, np.array([100,120,140])) 
+B = skfuzzy.trimf(x, np.array([140,150,160])) 
 
-print(first_nonzero(A,0))
-print(first_one(A,0))
-print(last_nonzero(A,0))
+#print(first_nonzero(A,0))
+#print(first_one(A,0))
+#print(last_nonzero(A,0))
 
 # Apply fuzzy arithmetic 
-z1, C1 = skfuzzy.dsw_add(x, A, x, B, 1000) 
-z2, C2 = skfuzzy.dsw_sub(x, A, x, B, 31) 
-z3, C3 = skfuzzy.dsw_mult(x, A, x, B, 31) 
+z1, C1 = skfuzzy.fuzzy_add(x, A, x, B) 
+z2, C2 = skfuzzy.fuzzy_sub(x, A, x, B) 
+z3, C3 = skfuzzy.fuzzy_mult(x, A, x, B) 
 
 # Plot results 
 fig, (ax0, ax1, ax2) = plt.subplots(nrows=3)
@@ -44,21 +44,21 @@ fig, (ax0, ax1, ax2) = plt.subplots(nrows=3)
 ax0.plot(x,A,'--b', label='A') 
 ax0.plot(x,B,':r', label='B') 
 ax0.plot(z1,C1,'c', label='A+B') 
-ax0.set_xlim(minx, maxx) 
+#ax0.set_xlim(minx, maxx) 
 ax0.legend() 
 ax0.set_title("Fuzzy Addition, A+B") 
 
 ax1.plot(x,A,'--b', label='A') 
 ax1.plot(x,B,':r', label='B') 
 ax1.plot(z2,C2,'c', label='A-B') 
-ax1.set_xlim(minx, maxx) 
+#ax1.set_xlim(minx, maxx) 
 ax1.legend() 
 ax1.set_title("Fuzzy Subtraction, A-B") 
 
 ax2.plot(x,A,'--b', label='A') 
 ax2.plot(x,B,':r', label='B') 
 ax2.plot(z3,C3,'c', label='A*B') 
-ax2.set_xlim(minx, maxx) 
+#ax2.set_xlim(minx, maxx) 
 ax2.legend() 
 ax2.set_title("Fuzzy Multiplication, A*B") 
 
