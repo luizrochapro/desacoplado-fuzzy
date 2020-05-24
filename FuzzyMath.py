@@ -39,12 +39,12 @@ class FuzzyMath:
     def __mul__ (self, p):
         s = FuzzyMath()
         if (type(p) == float) or (type(p) == int):
-            if lamb < 0:
-                print("Erro : Valor necessita ser maior que zero")
-                raise ValueError
-            else:
-                s.X = self.f * p
-                s.pertf = 1 - (1-self.pertf)**p
+            #if p < 0:
+            #    print("Erro : Valor necessita ser maior que zero")
+            #    raise ValueError
+            #else:
+            s.f = self.f * p
+            #s.pertf = 1 - (1-self.pertf)**p
         else:
             s.f = self.f * p.f
             s.pertf = self.pertf * p.pertf

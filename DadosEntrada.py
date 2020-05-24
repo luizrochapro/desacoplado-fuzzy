@@ -3,6 +3,7 @@
 import numpy as np
 import skfuzzy as fuzz
 import matplotlib.pyplot as plt
+from FuzzyMath import *
 
 class DadosEntrada:
 
@@ -103,15 +104,15 @@ class DadosEntrada:
     def calc_pliq(self):
         '''função que calcula vetor de potências ativas liquidas'''
         for k in range(0,self.nb):
-            tri1 = fuzz.trimf(self.unidis,np.array([self.barras_fuzzy[k,1],self.barras_fuzzy[k,2],self.barras_fuzzy[k,3]])/self.sbase) #PG
-            tri2 = fuzz.trimf(self.unidis,np.array([self.barras_fuzzy[k,7],self.barras_fuzzy[k,8],self.barras_fuzzy[k,9]])/self.sbase) #PL
-            self.pliq.append(fuzz.dsw_sub(self.unidis,tri1,self.unidis,tri2,1000))
+            tri1 = FuzzyMath(np.array([self.barras_fuzzy[k,1],self.barras_fuzzy[k,2],self.barras_fuzzy[k,3]])) #PG
+            tri2 = FuzzyMath(np.array([self.barras_fuzzy[k,7],self.barras_fuzzy[k,8],self.barras_fuzzy[k,9]])) #PL    
+            self.pliq.append((tri1-tri2)*(1/self.sbase))
         return None
 
     def calc_qliq(self):
         '''função que calcula vetor de potências reativas liquidas'''
         for k in range(0,self.nb):
-            tri1 = fuzz.trimf(self.unidis,np.array([self.barras_fuzzy[k,4],self.barras_fuzzy[k,5],self.barras_fuzzy[k,6]])/self.sbase) #PG
-            tri2 = fuzz.trimf(self.unidis,np.array([self.barras_fuzzy[k,10],self.barras_fuzzy[k,11],self.barras_fuzzy[k,12]])/self.sbase) #PL
-            self.qliq.append(fuzz.dsw_sub(self.unidis,tri1,self.unidis,tri2,1000))
+            tri1 = FuzzyMath(np.array([self.barras_fuzzy[k,4],self.barras_fuzzy[k,5],self.barras_fuzzy[k,6]])) #PG
+            tri2 = FuzzyMath(np.array([self.barras_fuzzy[k,10],self.barras_fuzzy[k,11],self.barras_fuzzy[k,12]])) #PL
+            self.qliq.append((tri1-tri2)*(1/self.sbase))
         return None

@@ -8,6 +8,7 @@
 from DadosEntrada import *
 from UniversoDiscurso import *
 import skfuzzy as fuzz
+from FuzzyMath import *
 
 #Dados de entrada
 filein = 'sis6.dat'
@@ -105,42 +106,45 @@ while (iter < 100):
     DP = []
 
     for k in range(0,d.nb):
-            v_real = fuzz.trimf(d.unidis,d.e[k]) # criar número fuzzy a partir dos pontos do triangulo
-            v_imag = fuzz.trimf(d.unidis,d.f[k]) # criar número fuzzy a partir dos pontos do triangulo
-            univ_real, v_real_squared = fuzz.dsw_mult(d.unidis,v_real,d.unidis,v_real,30) # elevar ao quadrado
-            univ_imag, v_imag_squared = fuzz.dsw_mult(d.unidis,v_imag,d.unidis,v_imag,30) # elevar ao quadrado
-            univ_soma, soma = fuzz.dsw_add(univ_real, v_real_squared, univ_imag, v_imag_squared,30)
-            aux = round(G[k,k],0) #arredondando para cair dentro da precisão do unidis
-            conduct = fuzz.trimf(d.unidis, np.array([aux, aux, aux])) #singleton
-            univ_mult, mult = fuzz.dsw_mult(univ_soma, soma, d.unidis, conduct, 1000)
-            DP.append(fuzz.dsw_sub(d.pliq[k][0], d.pliq[k][1], univ_mult, mult,30))
+            e = FuzzyMath(d.e[k]) # criar número fuzzy a partir dos pontos do triangulo
+            f = FuzzyMath(d.f[k]) # criar número fuzzy a partir dos pontos do triangulo
+            DP.append(d.pliq[k]-((e * e) + (f * f)) * float(G[k,k]))
 
     for r in range(0,d.nr):
         k = d.bini[r] 
         m = d.bfim[r] 
         k = k-1 #correção da dimensao para python
         m = m-1 #correção da dimensao para python
-        dt = d.ab[k] - d.ab[m]
-        DP[k] = DP[k] - d.vb[k]*d.vb[m]*(G[k,m]*np.cos(dt)+B[k,m]*np.sin(dt))
-        DP[m] = DP[m] - d.vb[m]*d.vb[k]*(G[m,k]*np.cos(-dt)+B[m,k]*np.sin(-dt))
-    
+        #dt = d.ab[k] - d.ab[m]
+        #DP[k] = DP[k] - d.vb[k]*d.vb[m]*(G[k,m]*np.cos(dt)+B[k,m]*np.sin(dt))
+        #DP[m] = DP[m] - d.vb[m]*d.vb[k]*(G[m,k]*np.cos(-dt)+B[m,k]*np.sin(-dt))
+        
+        ek = FuzzyMath(d.e[k])
+        em = FuzzyMath(d.e[m])
+        fk = FuzzyMath(d.f[k])
+        fm = FuzzyMath(d.f[m])
+        DP[k] = DP[k] - ek * (em * float(G[k,m]) - fm * float(B[k,m])) + fk * (fm * float(G[k,m]) + em * float(B[k,m]))
     
     # Artifício para a barra V-Teta não interfir no teste de convergência
     for k in range(0,d.nb):
         if d.tipo_barras[k] == 2: 
-            DP[k] = 0
+            DP[k] = FuzzyMath(np.array([0,0,0]))
 
     # Teste de convergência e obtenção de nova estimativa para os ângulos
     # de tensões de barra
-    if np.amax(np.absolute(DP)) <= 1e-4: # Teste de convergência subproblema P-Teta 
+    mod_dp=[]
+    for k in range(0, d.nb):
+        mod_dp.append(np.absolute(DP[k].f[1]))
+        
+    if np.amax(mod_dp) <= 1e-4: # Teste de convergência subproblema P-Teta 
         Kp = 0
         if Kq == 0:
             break  # Sai do processo iterativo
     else:  #Correção dos ângulos de tensões de barra
-        d.ab = d.ab + np.matmul(B1L,DP)  #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        #d.ab = d.ab + np.matmul(B1L,DP)  #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         #--
-        #ud = UniversoDiscurso(unidis, DF, G, B, v, a, nb, nr, bini, bfim)
-        #--    
+        ud = UniversoDiscurso(DP, G, B, d.e, d.f, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
+        ud.calc_dfmax_dxmax()
         p = p + 0.5
     
 
