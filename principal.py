@@ -9,6 +9,7 @@ from DadosEntrada import *
 from UniversoDiscurso import *
 import skfuzzy as fuzz
 from FuzzyMath import *
+from FuzzyInfSystem import *
 
 #Dados de entrada
 filein = 'sis6.dat'
@@ -108,7 +109,7 @@ while (iter < 100):
     for k in range(0,d.nb):
             e = FuzzyMath(d.e[k]) # criar número fuzzy a partir dos pontos do triangulo
             f = FuzzyMath(d.f[k]) # criar número fuzzy a partir dos pontos do triangulo
-            DP.append(d.pliq[k]-((e * e) + (f * f)) * float(G[k,k]))
+            DP.append(d.pliq[k] - ((e * e) + (f * f)) * float(G[k,k]))
 
     for r in range(0,d.nr):
         k = d.bini[r] 
@@ -143,8 +144,32 @@ while (iter < 100):
     else:  #Correção dos ângulos de tensões de barra
         #d.ab = d.ab + np.matmul(B1L,DP)  #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         #--
+        print("----DP----")
+        for i in range(0,6):
+            print(DP[i].f)
+        dx = []
         ud = UniversoDiscurso(DP, G, B, d.e, d.f, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
-        ud.calc_dfmax_dxmax()
+        dfmax,dxmax = ud.calc_dfmax_dxmax()        
+        f = FuzzyInfSystem(dfmax,dxmax,0.1,0.01)
+        x = f.pert_funcs_df()
+        y = f.pert_funcs_dx()
+        for k in range(0,d.nb):
+            if np.sum(DP[k].f) != 0:
+                dp = fuzz.trimf(f.uni_dis_F, np.sort(np.round(np.array(DP[k].f),1)))
+                act_mfs = f.activate_mfs(dp, x)
+                mfs_saida = f.calc_mfs_saida(act_mfs, y)
+                mfs_agregadas = f.agregar_mfs_saida(mfs_saida)
+                dx.append(f.calc_centroide(mfs_agregadas))
+            else:
+                dx.append(0)
+        print("== dx == P ==")
+        print(dx)
+        #atualizar os angulos
+        for k in range(0,d.nb):
+            d.ab[k] = d.ab[k] + dx[k]
+        #--
+        print("Angulos")
+        print(d.ab)
         p = p + 0.5
     
 
@@ -152,33 +177,69 @@ while (iter < 100):
     # Cálculo do vetor de equaçõees básicas (resíduos) DELTA_Q
     # OBS: lembrar que injeição de potência reativa especificada = Qliq
 
-    DQ = np.zeros((d.nb,1))
+    #DQ = np.zeros((d.nb,1))
+    DQ = []
 
     for k in range(0,d.nb):
-        DQ[k] = Qliq[k] + B[k,k]*np.square(d.vb[k])
+            e = FuzzyMath(d.e[k]) # criar número fuzzy a partir dos pontos do triangulo
+            f = FuzzyMath(d.f[k]) # criar número fuzzy a partir dos pontos do triangulo
+            DQ.append(d.qliq[k] + ((e * e) + (f * f)) * float(B[k,k]))
 
     for r in range(0,d.nr):
         k = d.bini[r] 
         m = d.bfim[r] 
         k = k-1 #correção da dimensao para python
         m = m-1 #correção da dimensao para python
-        dt = d.ab[k] - d.ab[m]
-        DQ[k] = DQ[k] - d.vb[k]*d.vb[m]*(G[k,m]*np.sin(dt)-B[k,m]*np.cos(dt))
-        DQ[m] = DQ[m] - d.vb[m]*d.vb[k]*(G[m,k]*np.sin(-dt)-B[m,k]*np.cos(-dt))
- 
+        ek = FuzzyMath(d.e[k])
+        em = FuzzyMath(d.e[m])
+        fk = FuzzyMath(d.f[k])
+        fm = FuzzyMath(d.f[m])
+        DQ[k] = DQ[k] - fk * (em * float(G[k,m]) - fm * float(B[k,m])) - ek * (fm * float(G[k,m]) + em * float(B[k,m]))
+        
+
     # Artifício para as barras V-Teta e P-V não interfir no teste de convergência
     for k in range(0,d.nb):
-        if d.tipo_barras[k] != 0:
-            DQ[k] = 0.0
+        if d.tipo_barras[k] == 2:
+            DQ[k] = FuzzyMath(np.array([0,0,0]))
     
     # Teste de convergÊncia e obtenção de nova estimativa para os módulos de tensões de barra
-    if np.amax(np.absolute(DQ)) <= 1e-4: # Teste de convergência subproblema Q-V 
+    mod_dq=[]
+    for k in range(0, d.nb):
+        mod_dq.append(np.absolute(DQ[k].f[1]))
+
+    if np.amax(mod_dp) <= 1e-4: # Teste de convergência subproblema Q-V 
         Kq = 0
         if Kp == 0:
             break #Sai do processo iterativo
     else: #Correção dos módulos de tensões de barra
-        d.vb = d.vb + np.matmul(B2L,DQ) #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<       
-              
+        #d.vb = d.vb + np.matmul(B2L,DQ) #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<       
+        #--
+        print("----DQ----")
+        for i in range(0,6):
+            print(DQ[i].f)
+        dx = []
+        ud = UniversoDiscurso(DQ, G, B, d.e, d.f, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
+        dfmax,dxmax = ud.calc_dfmax_dxmax()        
+        f = FuzzyInfSystem(dfmax,dxmax,0.1,0.01)
+        x = f.pert_funcs_df()
+        y = f.pert_funcs_dx()
+        for k in range(0,d.nb):
+            if np.sum(DQ[k].f) != 0:
+                dq = fuzz.trimf(f.uni_dis_F, np.sort(np.round(np.array(DQ[k].f),2)))
+                act_mfs = f.activate_mfs(dq, x)
+                mfs_saida = f.calc_mfs_saida(act_mfs, y)
+                mfs_agregadas = f.agregar_mfs_saida(mfs_saida)
+                dx.append(f.calc_centroide(mfs_agregadas))
+            else:
+                dx.append(0)
+        print("== dx == Q ==")
+        print(dx)
+        #atualizar os angulos
+        for k in range(0,d.nb):
+            d.vb[k] = d.vb[k] + dx[k]
+        #--             
+        print("Tensao")
+        print(d.vb)
         q = q + 0.5
     
     iter = p + q

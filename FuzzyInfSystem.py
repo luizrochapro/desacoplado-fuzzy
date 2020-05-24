@@ -12,17 +12,21 @@ class FuzzyInfSystem:
         self.dXmax = dXmax
         self.precisaoF = precisaoF
         self.precisaoX = precisaoX
-        self.stepF = self.precisaoF
-        self.stepX = self.precisaoX
+        #self.stepF = self.precisaoF
+        #self.stepX = self.precisaoX
+        '''
         num = 2
         while (self.stepF >= self.precisaoF):
-            (self.uni_dis_F, self.stepF) = c
+            (self.uni_dis_F, self.stepF) = np.linspace(-dFmax, dFmax, num, endpoint=True, retstep=True, dtype=float)
             num+=1
         num = 2
         while (self.stepX >= self.precisaoX):
             (self.uni_dis_X, self.stepX)= np.linspace(-dXmax, dXmax, num, endpoint=True, retstep=True, dtype=float)
             num+=1
-    
+        '''
+        self.uni_dis_F = np.arange(-dFmax, dFmax, self.precisaoF)
+        self.uni_dis_X = np.arange(-dXmax, dXmax, self.precisaoX)
+
     def pert_funcs_df(self):
         '''Função cria funções de pertinência triangulares'''
         ln = fuzz.trimf(self.uni_dis_F, [-self.dFmax, -self.dFmax, -self.dFmax/3])
