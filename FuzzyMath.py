@@ -5,6 +5,7 @@ class FuzzyMath:
     pertf = None
 
     '''Classe que implementa a artimética fuzzy para números fuzzy com funções de pertinência triangulares'''
+    #  http://computacaointeligente.com.br/artigos/operacoes-aritmeticas-entre-numeros-fuzzy/
     
     def __init__(self, *args):
         nargs = len(args)
@@ -26,13 +27,17 @@ class FuzzyMath:
 
     def __add__ (self, mf):
         s = FuzzyMath()
-        s.f = self.f + mf.f
+        s.f[0] = self.f[0] + mf.f[0]
+        s.f[1] = self.f[1] + mf.f[1]
+        s.f[2] = self.f[2] + mf.f[2]
         s.pertf = (self.pertf + mf.pertf) - (self.pertf * mf.pertf)
         return s
 
     def __sub__ (self, mf):
         s = FuzzyMath()
-        s.f = self.f - mf.f
+        s.f[0] = self.f[0] - mf.f[2]
+        s.f[1] = self.f[1] - mf.f[1]
+        s.f[2] = self.f[2] - mf.f[0]
         s.pertf = (self.pertf - mf.pertf) + (self.pertf * mf.pertf)
         return s
 
@@ -43,16 +48,22 @@ class FuzzyMath:
             #    print("Erro : Valor necessita ser maior que zero")
             #    raise ValueError
             #else:
-            s.f = self.f * p
+            s.f[0] = self.f[0] * p
+            s.f[1] = self.f[1] * p
+            s.f[2] = self.f[2] * p
             #s.pertf = 1 - (1-self.pertf)**p
         else:
-            s.f = self.f * p.f
+            s.f[0] = self.f[0] * p.f[0]
+            s.f[1] = self.f[1] * p.f[1]
+            s.f[2] = self.f[2] * p.f[2]
             s.pertf = self.pertf * p.pertf
         return s
 
     def __truediv__ (self, mf):
         s = FuzzyMath()
-        s.f = self.f / mf.f
+        s.f[0] = self.f[0] / mf.f[0]
+        s.f[1] = self.f[1] / mf.f[1]
+        s.f[2] = self.f[2] / mf.f[2]
         s.pertf = self.pertf / mf.pertf
         return s
 

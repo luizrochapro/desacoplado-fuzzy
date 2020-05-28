@@ -14,9 +14,10 @@ class Log:
     def close_file(self):
         self.log_file.close()
 
-    def write_log(self, str):
+    def write_log(self, str): 
         self.log_file.write(str)
         self.log_file.write('\n')
+
     
     def write_log_space(self):
         self.log_file.write('\n')
@@ -30,6 +31,8 @@ class Log:
         self.log_file.write('=============================================================================================================' + '\n')
 
     def write_log_list_fuzzy(self, lista):
-        for item in lista:
+        self.write_log_space()
+        for item in lista:            
             self.log_file.write(str(item.f)) 
             self.log_file.write('\n')       
+        self.write_log_space()

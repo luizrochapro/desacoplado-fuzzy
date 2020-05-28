@@ -123,7 +123,8 @@ while (iter < 30):
     log.write_log_space()
     
     DP = []
-
+    DPCALC = []
+    '''
     for k in range(0,d.nb):
             e = FuzzyMath(d.e[k]) # criar número fuzzy a partir dos pontos do triangulo
             f = FuzzyMath(d.f[k]) # criar número fuzzy a partir dos pontos do triangulo
@@ -139,7 +140,31 @@ while (iter < 30):
         fk = FuzzyMath(d.f[k])
         fm = FuzzyMath(d.f[m])
         DP[k] = DP[k] - ek * (em * float(G[k,m]) - fm * float(B[k,m])) + fk * (fm * float(G[k,m]) + em * float(B[k,m]))
-    
+    '''
+    for k in range(0,d.nb):
+            e = FuzzyMath(d.e[k]) # criar número fuzzy a partir dos pontos do triangulo
+            f = FuzzyMath(d.f[k]) # criar número fuzzy a partir dos pontos do triangulo
+            DPCALC.append(((e * e) + (f * f)) * float(G[k,k]))
+
+    for r in range(0,d.nr):
+        k = d.bini[r] 
+        m = d.bfim[r] 
+        k = k-1 #correção da dimensao para python
+        m = m-1 #correção da dimensao para python       
+        ek = FuzzyMath(d.e[k])
+        em = FuzzyMath(d.e[m])
+        fk = FuzzyMath(d.f[k])
+        fm = FuzzyMath(d.f[m])
+        DPCALC[k] = DPCALC[k] + (ek * (em * float(G[k,m]) - fm * float(B[k,m])) + fk * (fm * float(G[k,m]) + em * float(B[k,m])))
+        
+    log.write_log(">>> DP CALC")
+    for i in range(0,6):
+        log.write_log(str(DPCALC[i].f))
+
+    #calcula DP
+    for k in range(0,d.nb):
+        DP.append(d.pliq[k] - DPCALC[k])
+
     # Artifício para a barra V-Teta não interfir no teste de convergência
     for k in range(0,d.nb):
         if d.tipo_barras[k] == 2: 
@@ -158,11 +183,11 @@ while (iter < 30):
     else:  #Correção dos ângulos de tensões de barra
         #d.ab = d.ab + np.matmul(B1L,DP)  #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         #--
-        log.write_log_space()
+
         log.write_log(">>> DP")
         for i in range(0,6):
             log.write_log(str(DP[i].f))
-        log.write_log_space()
+
         
         dx = []
         ud = UniversoDiscurso(DP, G, B, d.e, d.f, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
@@ -186,7 +211,8 @@ while (iter < 30):
         
         #atualizar os angulos
         for k in range(0,d.nb):
-            d.ab[k] = d.ab[k] + dx[k]
+            #d.ab[k] = d.ab[k] + dx[k]
+            d.e[k] =d.e[k]+ dx[k]
         #--
 
         log.write_log_space()
@@ -203,7 +229,8 @@ while (iter < 30):
 
     #DQ = np.zeros((d.nb,1))
     DQ = []
-
+    DQCALC = []
+    '''
     for k in range(0,d.nb):
             e = FuzzyMath(d.e[k]) # criar número fuzzy a partir dos pontos do triangulo
             f = FuzzyMath(d.f[k]) # criar número fuzzy a partir dos pontos do triangulo
@@ -219,7 +246,32 @@ while (iter < 30):
         fk = FuzzyMath(d.f[k])
         fm = FuzzyMath(d.f[m])
         DQ[k] = DQ[k] - fk * (em * float(G[k,m]) - fm * float(B[k,m])) - ek * (fm * float(G[k,m]) + em * float(B[k,m]))
-        
+    '''   
+
+    for k in range(0,d.nb):
+            e = FuzzyMath(d.e[k]) # criar número fuzzy a partir dos pontos do triangulo
+            f = FuzzyMath(d.f[k]) # criar número fuzzy a partir dos pontos do triangulo
+            DQCALC.append(((e * e) + (f * f)) * float(B[k,k]))
+
+    for r in range(0,d.nr):
+        k = d.bini[r] 
+        m = d.bfim[r] 
+        k = k-1 #correção da dimensao para python
+        m = m-1 #correção da dimensao para python
+        ek = FuzzyMath(d.e[k])
+        em = FuzzyMath(d.e[m])
+        fk = FuzzyMath(d.f[k])
+        fm = FuzzyMath(d.f[m])
+        DQCALC[k] = DQCALC[k] - fk * (em * float(G[k,m]) - fm * float(B[k,m])) - ek * (fm * float(G[k,m]) + em * float(B[k,m]))
+
+
+    log.write_log(">>> DQ CALC")
+    for i in range(0,6):
+        log.write_log(str(DQCALC[i].f))
+
+    #calcula DQ
+    for k in range(0,d.nb):
+        DQ.append(d.qliq[k] - DQCALC[k])
 
     # Artifício para as barras V-Teta e P-V não interfir no teste de convergência
     for k in range(0,d.nb):
@@ -238,10 +290,10 @@ while (iter < 30):
     else: #Correção dos módulos de tensões de barra
         #d.vb = d.vb + np.matmul(B2L,DQ) #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<       
         #--
-        log.write_log_space()                
+               
         log.write_log(">>> DX  >>> Q >>> delta v ")
         log.write_log(str(dx))
-        log.write_log_space() 
+
 
         dx = []
         ud = UniversoDiscurso(DQ, G, B, d.e, d.f, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
@@ -261,12 +313,13 @@ while (iter < 30):
 
         #atualizar os módulos de tensão
         for k in range(0,d.nb):
-            d.vb[k] = d.vb[k] + dx[k]
+            #d.vb[k] = d.vb[k] + dx[k]
+            d.f[k] =d.f[k]+ dx[k]
         #--             
-        log.write_log_space()
+
         log.write_log(">>> Módulo de Tensão")
         log.write_log(str(d.vb))
-        log.write_log_space()
+
 
         q = q + 0.5
     

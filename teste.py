@@ -19,3 +19,4 @@ mfs_agregadas = f.agregar_mfs_saida(mfs_saida)
 dx = f.calc_centroide(mfs_agregadas)
 
 print(dx)
+
