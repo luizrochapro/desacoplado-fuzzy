@@ -155,8 +155,9 @@ while (iter < 30):
         em = FuzzyMath(d.e[m])
         fk = FuzzyMath(d.f[k])
         fm = FuzzyMath(d.f[m])
-        DPCALC[k] = DPCALC[k] + (ek * (em * float(G[k,m]) - fm * float(B[k,m])) + fk * (fm * float(G[k,m]) + em * float(B[k,m])))
-        
+        DPCALC[k] = DPCALC[k] + (ek * ((em * float(G[k,m])) - (fm * float(B[k,m]))) + fk * ((fm * float(G[k,m])) + (em * float(B[k,m]))))
+        DPCALC[m] = DPCALC[m] + (em * ((ek * float(G[m,k])) - (fk * float(B[m,k]))) + fm * ((fk * float(G[m,k])) + (ek * float(B[m,k]))))
+
     log.write_log(">>> DP CALC")
     for i in range(0,6):
         log.write_log(str(DPCALC[i].f))
@@ -251,7 +252,7 @@ while (iter < 30):
     for k in range(0,d.nb):
             e = FuzzyMath(d.e[k]) # criar número fuzzy a partir dos pontos do triangulo
             f = FuzzyMath(d.f[k]) # criar número fuzzy a partir dos pontos do triangulo
-            DQCALC.append(((e * e) + (f * f)) * float(B[k,k]))
+            DQCALC.append(((e * e) + (f * f)) * float(-1*B[k,k]))
 
     for r in range(0,d.nr):
         k = d.bini[r] 
@@ -262,8 +263,8 @@ while (iter < 30):
         em = FuzzyMath(d.e[m])
         fk = FuzzyMath(d.f[k])
         fm = FuzzyMath(d.f[m])
-        DQCALC[k] = DQCALC[k] - fk * (em * float(G[k,m]) - fm * float(B[k,m])) - ek * (fm * float(G[k,m]) + em * float(B[k,m]))
-
+        DQCALC[k] = DQCALC[k] + fk * ((em * float(G[k,m])) - (fm * float(B[k,m]))) - ek * ((fm * float(G[k,m])) + (em * float(B[k,m])))
+        DQCALC[m] = DQCALC[m] + fm * ((ek * float(G[m,k])) - (fk * float(B[m,k]))) - em * ((fk * float(G[m,k])) + (ek * float(B[m,k])))
 
     log.write_log(">>> DQ CALC")
     for i in range(0,6):
@@ -294,6 +295,9 @@ while (iter < 30):
         log.write_log(">>> DX  >>> Q >>> delta v ")
         log.write_log(str(dx))
 
+        log.write_log(">>> DQ")
+        for i in range(0,6):
+            log.write_log(str(DQ[i].f))
 
         dx = []
         ud = UniversoDiscurso(DQ, G, B, d.e, d.f, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
