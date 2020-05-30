@@ -1,5 +1,5 @@
 ##############################################################################
-#  Algoritmo desacoplado rápido                                              #
+#  Algoritmo Desacoplado                                                     #
 #  Eng. Luiz Gonzaga Rocha Junior                                            #
 #  contato@luizrocha.eng.br                                                  #
 ##############################################################################

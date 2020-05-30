@@ -116,3 +116,17 @@ class DadosEntrada:
             tri2 = FuzzyMath(np.array([self.barras_fuzzy[k,10],self.barras_fuzzy[k,11],self.barras_fuzzy[k,12]])) #PL
             self.qliq.append((tri1-tri2)*(1/self.sbase))
         return None
+    
+    def calc_pliq_newton(self):
+        '''função calcula vetor de potências liquidas de potencia ativa'''
+        pliq = []
+        for k in range(0,self.nb):
+            pliq.append(self.barras_fuzzy[k,2]-self.barras_fuzzy[k,8])
+        return np.array(pliq)
+    
+    def calc_qliq_newton(self):
+        qliq = []
+        '''função calcula vetor de potências liquidas de potencia reativa'''
+        for k in range(0,self.nb):
+            qliq.append(self.barras_fuzzy[k,5]-self.barras_fuzzy[k,11])
+        return np.array(qliq)
