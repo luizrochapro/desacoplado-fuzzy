@@ -1,8 +1,8 @@
 #coding: utf-8
 
 import numpy as np
-import skfuzzy as fuzz
-import matplotlib.pyplot as plt
+#import skfuzzy as fuzz
+#import matplotlib.pyplot as plt
 from FuzzyMath import *
 
 class DadosEntrada:
@@ -26,6 +26,10 @@ class DadosEntrada:
         self.qliq = [] # QG - QL  armazena o espaço de discurso da Qliq[0] e a MF[1]
         self.e = [] #parte real da tensão de barra retangular
         self.f =[] #parte imaginaria da tensão de barra retangular
+        self.pg = [] # geração ativas das barras
+        self.qg = [] # geração reativa das barras
+        self.pl = [] # cargas centrais de barra
+        self.ql = [] # cargas centrais de barra
 
     def setPath(self,path):
         self.path = path
@@ -99,7 +103,21 @@ class DadosEntrada:
             self.f.append(y)
         self.e = np.array(self.e)
         self.f = np.array(self.f)
+        self.pg = np.array(self.barras_fuzzy[:,1:4])
+        self.qg = np.array(self.barras_fuzzy[:,4:7])
+        self.pl = np.array(self.barras_fuzzy[:,7:10])
+        self.ql = np.array(self.barras_fuzzy[:,10:])
 
+        #carregar cargas centrais
+        #for k in range(0,self.nb):
+        #    self.pl.append(self.barras_fuzzy[k,8])
+        #    self.ql.append(self.barras_fuzzy[k,11])
+        #self.pl = np.array(self.pl)
+        #self.ql = np.array(self.ql)
+        #self.pg = self.pg.reshape(-1,1)
+        #self.qg = self.qg.reshape(-1,1)        
+        #self.pl = self.pl.reshape(-1,1)
+        #self.ql = self.ql.reshape(-1,1)        
 
     def calc_pliq(self):
         '''função que calcula vetor de potências ativas liquidas'''
