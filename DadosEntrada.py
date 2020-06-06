@@ -30,6 +30,8 @@ class DadosEntrada:
         self.qg = [] # geração reativa das barras
         self.pl = [] # cargas centrais de barra
         self.ql = [] # cargas centrais de barra
+        self.qmin = []
+        self.qmax = []
 
     def setPath(self,path):
         self.path = path
@@ -107,7 +109,9 @@ class DadosEntrada:
         self.qg = np.array(self.barras_fuzzy[:,4:7])
         self.pl = np.array(self.barras_fuzzy[:,7:10])
         self.ql = np.array(self.barras_fuzzy[:,10:])
-
+        self.qmin = self.barras[:,12]
+        self.qmax = self.barras[:,13]
+        
         #carregar cargas centrais
         #for k in range(0,self.nb):
         #    self.pl.append(self.barras_fuzzy[k,8])

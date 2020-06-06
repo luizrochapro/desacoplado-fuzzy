@@ -85,6 +85,17 @@ def newton(filein):
                 P[i] = P[i] + d.vb[i][1] * d.vb[k][1] * (G[i,k]*np.cos(d.ab[i][1]-d.ab[k][1]) + B[i,k]*np.sin(d.ab[i][1]-d.ab[k][1]))
                 Q[i] = Q[i] + d.vb[i][1] * d.vb[k][1] * (G[i,k]*np.sin(d.ab[i][1]-d.ab[k][1]) - B[i,k]*np.cos(d.ab[i][1]-d.ab[k][1]))
     
+        
+        #checar limites de reativo
+        if iter <= 7 and iter > 2:    # checar após a sétima iteração
+            for n in range(0,d.nb):
+                if d.tipo_barras[n] == 1:
+                    QG = Q[n] + (d.ql[n,1]/d.sbase)
+                    if QG < (d.qmin[n]/d.sbase):
+                        d.vb[n,1] = d.vb[n,1] + 0.01
+                    elif QG > (d.qmax[n]/d.sbase):
+                        d.vb[n,1] = d.vb[n,1] - 0.01
+
         #calculo dos mismatch
         dpa = p_esp.reshape(-1,1) - P
         dqa = q_esp.reshape(-1,1) - Q
@@ -244,8 +255,8 @@ def newton(filein):
 
     Pi = np.real(Si)
     Qi = -np.imag(Si)
-    Pg = Pi + d.pl[:,1]
-    Qg = Qi + d.ql[:,1]
+    Pg = Pi + d.pl[:,1].reshape(-1,1)
+    Qg = Qi + d.ql[:,1].reshape(-1,1)
 
     if conv:
         print('Sistema convergiu em {0} iterações'.format(iter))
@@ -254,4 +265,4 @@ def newton(filein):
         print('{} iterações'.format(iter))
 
 
-    return d.vb, d.ab, J, Pij, Qij, Pg, Qg, Lij, Y, d
+    return d.vb, d.ab, J, Pij, Qij, Pi, Qi, Pg, Qg, Lpij, Lqij, Y, d , npvpq, npq
