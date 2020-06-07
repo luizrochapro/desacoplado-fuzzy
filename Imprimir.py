@@ -10,7 +10,7 @@ class Imprimir:
         self.path_file  = path_file
         self.d = d
 
-    def write_results(self,Pij, Qij, Pi, Qi, Pg, Qg, Lpij, Lqij):
+    def write_results(self,Pij, Qij, Pi, Qi, Pg, Qg, Lpij, Lqij, Pik, Qik, PerdasPik):
         self.file = open(self.path_file,'w', encoding='utf-8') #abre arquivo
         self.file.write('{0:*^120s}'.format('VALORES DETERMINÍSTICOS') + '\n')
         self.file.write('\n')
@@ -52,4 +52,47 @@ class Imprimir:
             self.file.write('{0:^4d}{1:^2}{2:^4d}{3:>10.4f}{4:^10}{5:>10.4f}'.format(i,'-',j, Lpij[m,0],'|',Lqij[m,0])+'\n')
         self.file.write(''+'\n')
         self.file.write('{:-^120s}'.format('-') + '\n')
+        self.file.write('\n')
+        self.file.write('{0:*^120s}'.format('VALORES FUZZY') + '\n')
+        self.file.write('\n')
+        self.file.write('{0:*^120s}'.format('Dados de Barra') + '\n')                                                                                                                
+        self.file.write('{0:^5}{1:^7}{2:^7}{3:^7}{4:^7}{5:^7}{6:^7}{7:^7}{8:^7}{9:^7}{10:^7}{11:^7}{12:<7}'.format(
+            'Barra','|','V1','|','V2','|','V3','|','Ang1','|','Ang2','|','Ang3') + '\n')
+        for k in range(self.d.nb):
+            self.file.write('{0:>5d}{1:^7}{2:>7.3f}{3:^7}{4:>7.3f}{5:^7}{6:>7.3f}{7:^7}{8:>7.3f}{9:^7}{10:>7.3f}{11:^7}{12:>7.3f}'.format(
+                k+1,'|', float(self.d.vb[k,0]),'|', float(self.d.vb[k,1]), '|', float(self.d.vb[k,2]),'|',
+                180*float(self.d.ab[k,0])/np.pi,'|', 180*float(self.d.ab[k,1])/np.pi,'|', 180*float(self.d.ab[k,2])/np.pi) + '\n')
+
+        self.file.write('{:-^120s}'.format('-') + '\n')
+        self.file.write('\n')
+
+        self.file.write('{0:*^120s}'.format('  Potência ativa e Reativa [MW] e [Mvar]  ') + '\n')
+        self.file.write('{:-^120s}'.format('-') + '\n')
+        self.file.write('{0:^4}{1:^2}{2:^4}{3:>10}{4:>10}{5:>10}{6:^10}{7:^4}{8:^2}{9:^4}{10:>10}{11:>10}{12:>10}{13:^10}'.format('DE','-','PARA','P1','P2','P3','|','PARA','-','DE','P1','P2','P3','|')+'\n')
+        for m in range(self.d.nr):
+            i = self.d.bini[m]
+            j = self.d.bfim[m]
+            self.file.write('{0:^4d}{1:^2}{2:^4d}{3:>10.2f}{4:>10.2f}{5:>10.2f}{6:^10}{7:^4d}{8:^2}{9:^4d}{10:>10.2f}{11:>10.2f}{12:>10.2f}{13:^10}'.format(i,'-',j, Pik[m,0], Pik[m,1], Pik[m,2],'|',j,'-',i,Pik[m,0], Pik[m,1], Pik[m,2],'|') +'\n')
+        self.file.write(''+'\n')
+        self.file.write('{:-^120s}'.format('-') + '\n')
+
+        self.file.write('{0:^4}{1:^2}{2:^4}{3:>10}{4:>10}{5:>10}{6:^10}{7:^4}{8:^2}{9:^4}{10:>10.2}{11:>10.2}{12:>10.2}'.format('DE','-','PARA','Q1','Q2','Q3','|','PARA','-','DE','Q1','Q2','Q3')+'\n')
+        for m in range(self.d.nr):
+            i = self.d.bini[m]
+            j = self.d.bfim[m]
+            self.file.write('{0:^4d}{1:^2}{2:^4d}{3:>10.2f}{4:>10.2f}{5:>10.2f}{6:^10}{7:^4d}{8:^2}{9:^4d}{10:>10.2f}{11:>10.2f}{12:>10.2f}'.format(i,'-',j,Qik[m,0],Qik[m,1],Qik[m,2],'|', j,'-', i, Qik[m,0], Qik[m,1], Qik[m,2]) +'\n')
+        self.file.write(''+'\n')
+        self.file.write('{:-^120s}'.format('-') + '\n')
+
+        self.file.write('{0:*^120s}'.format('  Perdas Ativas  ') + '\n')
+        self.file.write('{:-^120s}'.format('-') + '\n')
+        self.file.write('{0:^4}{1:^2}{2:^4}{3:>10}{4:>10}{5:>10}{6:^10}{7:^4}{8:^2}{9:^4}{10:>10}{11:>10}{12:>10}{13:^10}'.format('DE','-','PARA','P1','P2','P3','|','PARA','-','DE','P1','P2','P3','|')+'\n')
+        for m in range(self.d.nr):
+            i = self.d.bini[m]
+            j = self.d.bfim[m]
+            self.file.write('{0:^4d}{1:^2}{2:^4d}{3:>10.3f}{4:>10.3f}{5:>10.3f}{6:^10}{7:^4d}{8:^2}{9:^4d}{10:>10.3f}{11:>10.3f}{12:>10.3f}{13:^10}'.format(i,'-',j, PerdasPik[m,0], PerdasPik[m,1], PerdasPik[m,2],'|',j,'-',i,PerdasPik[m,0], PerdasPik[m,1], PerdasPik[m,2],'|') +'\n')
+        self.file.write(''+'\n')
+        self.file.write('{:-^120s}'.format('-') + '\n')
+
+
         self.file.close() # fecha arquivo

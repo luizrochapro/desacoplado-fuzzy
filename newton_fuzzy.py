@@ -184,6 +184,6 @@ for m in range(d.nr):
 
 #imprimir resultados no arquivo de saída
 printer = Imprimir('saídas/resultados.lst', d)
-printer.write_results(Pij, Qij, Pi, Qi, Pg, Qg, Lpij, Lqij)
+printer.write_results(Pij, Qij, Pi, Qi, Pg, Qg, Lpij, Lqij, Pik, Qik, PerdasPik)
 
 print('Fim processamento')
