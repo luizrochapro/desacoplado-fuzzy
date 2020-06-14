@@ -1,4 +1,4 @@
-#import numpy as np
+import numpy as np
 
 class FuzzyMath:
     f = None
@@ -71,4 +71,11 @@ class FuzzyMath:
         s = FuzzyMath()
         s.f = self.f ** lamb
         s.pertf = self.pertf ** lamb
+        return s
+
+    def asArray(self):
+        s = np.zeros((1,3))
+        s[0,0] = self.f[0]
+        s[0,1] = self.f[1]
+        s[0,2] = self.f[2]
         return s

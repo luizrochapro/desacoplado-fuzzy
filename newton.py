@@ -73,9 +73,9 @@ def newton(filein):
     iter = 0
     tol = 1 # tolerância
     conv = False
-
+    err = 1e-4
     #inicio do processo iterativo
-    while (iter < 500 and conv == False):
+    while (iter < 1000 and conv == False):
         
         # Calcular P and Q
         P = np.zeros((d.nb,1))
@@ -186,7 +186,7 @@ def newton(filein):
 
         tol = np.max(np.absolute(mismatch))
 
-        if tol <= 1e-4:
+        if tol <= err:
             conv = True
         
         iter+=1

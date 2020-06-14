@@ -1,49 +1,38 @@
 from newton import newton
 import numpy as np
 from Imprimir import *
+from FuzzyMath import *
 
-#filein = 'sis3_2.dat'
+filein = 'sis3_2.dat'
 #filein = 'sis13.dat'
-filein = 'sis6.dat'
+#filein = 'sis6.dat'
 #filein = 'sis14.dat'
 
 v, ang, J, Pij, Qij, Pi, Qi, Pg, Qg, Lpij, Lqij, Y, d, npvpq, npq = newton(filein)
 
 G = np.real(Y)
 B = np.imag(Y)
-'''
-# cálculo do delta z
-dZPg = np.zeros((d.nb,3))
-for k in range(0,d.nb):
-    for i in range(0,3):
-        dZPg[k,i] = (d.pg[k,i] - d.pg[k,1])/d.sbase
 
-dZPl = np.zeros((d.nb,3))
-for k in range(0,d.nb):
-    for i in range(0,3):
-        dZPl[k,i] = (d.pl[k,i] - d.pl[k,1])/d.sbase
 
-dZQg = np.zeros((d.nb,3))
-for k in range(0,d.nb):
-    for i in range(0,3):
-        dZQg[k,i] = (d.qg[k,i] - d.qg[k,1])/d.sbase
+dZP = np.zeros((npvpq,3))
+for k in range(npvpq):
+    if d.tipo_barras[k]!=2:
+        a = FuzzyMath(d.pg[k])
+        b = FuzzyMath(d.pl[k])
+        c = a - b
+        dZP[k] = c.asArray()
+        for i in range(3):
+            dZP[k,i] = (dZP[k,i] - Pi[k])/d.sbase
 
-dZQl = np.zeros((d.nb,3))
-for k in range(0,d.nb):
-    for i in range(0,3):
-        dZQl[k,i] = (d.ql[k,i] - d.ql[k,1])/d.sbase
-'''
-dZP = np.zeros((npq,3))
-for k in range(0,npq):
-    for i in range(0,3):
-        if d.tipo_barras[k]==0:
-            dZP[k,i] = ((d.pg[k,1] - d.pl[k,1]) - (d.pg[k,i] - d.pl[k,i]))/d.sbase
-
-dZQ = np.zeros((npvpq,3))
-for k in range(0,npvpq):
-    for i in range(0,3):
-        if d.tipo_barras[k]!=2:
-            dZQ[k,i] = ((d.qg[k,1] - d.ql[k,1]) - (d.qg[k,i] - d.ql[k,i]))/d.sbase
+dZQ = np.zeros((npq,3))
+for k in range(npq):
+    if d.tipo_barras[k]==0:
+        a = FuzzyMath(d.qg[k])
+        b = FuzzyMath(d.ql[k])
+        c = a - b
+        dZQ[k] = c.asArray()
+        for i in range(3):
+            dZQ[k,i] = (dZQ[k,i] - Qi[k])/d.sbase
 
 #concatenar os vetores dZP e dZQ
 dZPdZQ = np.concatenate((dZP, dZQ), axis=0)
@@ -52,9 +41,30 @@ dZPdZQ = np.concatenate((dZP, dZQ), axis=0)
 Jinv = np.linalg.inv(J)
 
 #calculo dos incrementos
-dvec = np.matmul(Jinv,dZPdZQ)
-dv = dvec[:npq]
-dang = dvec[npq:]
+aux = np.zeros((1,3))
+dvec = np.zeros((npvpq+npq,3))
+for i in range(npvpq+npq): #dimensao da Jinv
+    for j in range(npvpq+npq):
+        for k in range(3):
+            aux[0,k] = Jinv[i,j] * dZPdZQ[j,k]
+            if Jinv[i,j] < 0:
+                a = aux[0,0]
+                c = aux[0,2]
+                aux[0,0] = c
+                aux[0,2] = a                
+        dvec[i,:] = dvec[i,:] + aux
+
+dang = dvec[:npvpq]
+dv = dvec[npvpq:]
+
+
+#atualizar angulos
+m = 0
+for k in range(0, d.nb):
+    if d.tipo_barras[k] != 2:
+        for i in range(0,3):
+            d.ab[k,i] = d.ab[k,1] + dang[m,i]
+        m+=1
 
 
 #atualizar módulo de tensão 
@@ -65,13 +75,6 @@ for k in range(0, d.nb):
             d.vb[k,i] = d.vb[k,1] + dv[m,i]
         m+=1
 
-#atualizar angulos
-m = 0
-for k in range(0, d.nb):
-    if d.tipo_barras[k] != 2:
-        for i in range(0,3):
-            d.ab[k,i] = d.ab[k,1] + dang[m,i]
-        m+=1
 
 
 # derivadas parciais para fluxo ativo
@@ -112,23 +115,60 @@ for k in range(d.nb):
     dangf[k,1] = 0
     dangf[k,2] = d.ab[k,2]    
 
-#calculo das distribuições do fluxo de potencia ativa
-dPik = np.zeros((d.nr,3))
+# criar matrizes Jinv expandidas para todas barras
+JinvExpT = np.zeros((d.nb,npvpq+npq))
+JinvExpV = np.zeros((d.nb,npvpq+npq))
+m = 0
+n = npvpq
+for k in range(d.nb):
+    if d.tipo_barras[k]==1 or d.tipo_barras[k]==0:
+        JinvExpT[k,:] = Jinv[m,:]
+        if d.tipo_barras[k]==0:
+            JinvExpV[k,:] = Jinv[n,:]
+            n += 1
+        m += 1
+
+#calculo matriz sensibilidade para potência ativa
+Ep = np.zeros((d.nr,npvpq+npq))
 for m in range(d.nr):
     i = d.bini[m]
     k = d.bfim[m]
     i -= 1
     k -= 1
-    dPik[m,:] = (dPdVda[0,m] * dvf[i]) + (dPdVda[1,m] * dvf[k]) + (dPdVda[2,m] * dangf[i]) + (dPdVda[3,m] * dangf[k])
+    Ep[m,:] = (dPdVda[0,m] * JinvExpV[i,:]) + (dPdVda[1,m] * JinvExpV[k,:]) + (dPdVda[2,m] * JinvExpT[i,:]) + (dPdVda[3,m] * JinvExpT[k,:])
+
+#calculo matriz sensibilidade para potência reativa
+Eq = np.zeros((d.nr,npvpq+npq))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    Eq[m,:] = (dQdVda[0,m] * JinvExpV[i,:]) + (dQdVda[1,m] * JinvExpV[k,:]) + (dQdVda[2,m] * JinvExpT[i,:]) + (dQdVda[3,m] * JinvExpT[k,:])
+
+#calculo das distribuições do fluxo de potencia ativa
+dPik = np.zeros((d.nr,3))
+for m in range(d.nr):
+    for j in range(npvpq+npq):
+        aux = Ep[m,j] * dZPdZQ[j,:]
+        if Ep[m,j] < 0:
+            a = aux[0]
+            c = aux[2]
+            aux[0] = c
+            aux[2] = a 
+        dPik[m,:] = dPik[m,:] + aux
 
 #calculo das distribuições do fluxo de potencia reativa
 dQik = np.zeros((d.nr,3))
 for m in range(d.nr):
-    i = d.bini[m]
-    k = d.bfim[m]
-    i -= 1
-    k -= 1
-    dQik[m,:] = (dQdVda[0,m] * dvf[i]) + (dQdVda[1,m] * dvf[k]) + (dQdVda[2,m] * dangf[i]) + (dQdVda[3,m] * dangf[k])
+    for j in range(npvpq+npq):
+        aux = Eq[m,j] * dZPdZQ[j,:]
+        if Eq[m,j] < 0:
+            a = aux[0]
+            c = aux[2]
+            aux[0] = c
+            aux[2] = a 
+        dQik[m,:] = dQik[m,:] + aux
 
 #calculo do fluxo fuzzy nos ramos
 Pik = np.zeros((d.nr,3))
@@ -161,6 +201,28 @@ for m in range(d.nr):
     dPerdasik[2,m] = 2*G[i,k]*d.vb[i][1]-2*d.vb[k][1]*G[i,k]*np.cos(d.ab[i][1]-d.ab[k][1])
     dPerdasik[3,m] = 2*G[i,k]*d.vb[k][1]-2*d.vb[i][1]*G[i,k]*np.cos(d.ab[i][1]-d.ab[k][1])
 
+#calculo matriz sensibilidade para perdas
+S = np.zeros((d.nr,npvpq+npq))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    S[m,:] = (dPerdasik[0,m] * JinvExpV[i,:]) + (dPerdasik[1,m] * JinvExpV[k,:]) + (dPerdasik[2,m] * JinvExpT[i,:]) + (dPerdasik[3,m] * JinvExpT[k,:])
+
+
+#calculo das distribuições das perdas ativas
+dPerPik = np.zeros((d.nr,3))
+for m in range(d.nr):
+    for j in range(npvpq+npq):
+        aux = S[m,j] * dZPdZQ[j,:]
+        if S[m,j] < 0:
+            a = aux[0]
+            c = aux[2]
+            aux[0] = c
+            aux[2] = a 
+        dPerPik[m,:] = dPerPik[m,:] + aux
+'''
 #calculo das distribuições das perdas ativas
 dPerPik = np.zeros((d.nr,3))
 for m in range(d.nr):
@@ -169,7 +231,7 @@ for m in range(d.nr):
     i -= 1
     k -= 1
     dPerPik[m,:] = (dPerdasik[0,m] * dvf[i]) + (dPerdasik[1,m] * dvf[k]) + (dPerdasik[2,m] * dangf[i]) + (dPerdasik[3,m] * dangf[k])
-
+'''
 #calculo das perdas ativas
 PerdasPik = np.zeros((d.nr,3))
 for m in range(d.nr):
@@ -183,7 +245,7 @@ for m in range(d.nr):
 #S = np.matmul(dPerdasik , Jinv) 
 
 #imprimir resultados no arquivo de saída
-printer = Imprimir('saídas/resultados.lst', d)
+printer = Imprimir('saídas/resultados_{0}'.format(filein), d)
 printer.write_results(Pij, Qij, Pi, Qi, Pg, Qg, Lpij, Lqij, Pik, Qik, PerdasPik)
 
 print('Fim processamento')

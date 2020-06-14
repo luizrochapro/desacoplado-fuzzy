@@ -90,7 +90,7 @@ class Imprimir:
         for m in range(self.d.nr):
             i = self.d.bini[m]
             j = self.d.bfim[m]
-            self.file.write('{0:^4d}{1:^2}{2:^4d}{3:>10.3f}{4:>10.3f}{5:>10.3f}{6:^10}{7:^4d}{8:^2}{9:^4d}{10:>10.3f}{11:>10.3f}{12:>10.3f}{13:^10}'.format(i,'-',j, PerdasPik[m,0], PerdasPik[m,1], PerdasPik[m,2],'|',j,'-',i,PerdasPik[m,0], PerdasPik[m,1], PerdasPik[m,2],'|') +'\n')
+            self.file.write('{0:^4d}{1:^2}{2:^4d}{3:>10.5f}{4:>10.5f}{5:>10.5f}{6:^10}{7:^4d}{8:^2}{9:^4d}{10:>10.5f}{11:>10.5f}{12:>10.5f}{13:^10}'.format(i,'-',j, PerdasPik[m,0], PerdasPik[m,1], PerdasPik[m,2],'|',j,'-',i,PerdasPik[m,0], PerdasPik[m,1], PerdasPik[m,2],'|') +'\n')
         self.file.write(''+'\n')
         self.file.write('{:-^120s}'.format('-') + '\n')
 
