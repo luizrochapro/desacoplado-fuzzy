@@ -11,6 +11,7 @@ from UniversoDiscurso import *
 from FuzzyMath import *
 from FuzzyInfSystem import *
 from Log import *
+from funcoes import *
 
 #Arquivo de Log
 log = Log('saida.log')
@@ -106,7 +107,7 @@ q = 0
 Kp = 1
 Kq = 1
 
-while (iter < 30):
+while (iter < 100):
     
     # -------------- CALCULO DO SUBPROBLEMA ATIVO OU P-TETA ---------------
     # Cálculo do vetor de equações básicas (resíduos) DELTA_P
@@ -123,7 +124,7 @@ while (iter < 30):
     log.write_log_space()
     
     DP = []
-    DPCALC = []
+    PCALC = []
     '''
     for k in range(0,d.nb):
             e = FuzzyMath(d.e[k]) # criar número fuzzy a partir dos pontos do triangulo
@@ -141,6 +142,8 @@ while (iter < 30):
         fm = FuzzyMath(d.f[m])
         DP[k] = DP[k] - ek * (em * float(G[k,m]) - fm * float(B[k,m])) + fk * (fm * float(G[k,m]) + em * float(B[k,m]))
     '''
+    PCALC = calc_dpcalc(d.nb,d.nr,d.bini,d.bfim,G,B,d.vb,d.ab,d.sbase)
+    '''
     for k in range(0,d.nb):
             e = FuzzyMath(d.e[k]) # criar número fuzzy a partir dos pontos do triangulo
             f = FuzzyMath(d.f[k]) # criar número fuzzy a partir dos pontos do triangulo
@@ -156,14 +159,14 @@ while (iter < 30):
         fk = FuzzyMath(d.f[k])
         fm = FuzzyMath(d.f[m])
         DPCALC[k] = DPCALC[k] + (ek * (em * float(G[k,m]) - fm * float(B[k,m])) + fk * (fm * float(G[k,m]) + em * float(B[k,m])))
-        
-    log.write_log(">>> DP CALC")
+    '''    
+    log.write_log(">>> P CALC")
     for i in range(0,6):
-        log.write_log(str(DPCALC[i].f))
+        log.write_log(str(PCALC[i]))
 
     #calcula DP
     for k in range(0,d.nb):
-        DP.append(d.pliq[k] - DPCALC[k])
+        DP.append(d.pliq[k] - PCALC[k])
 
     # Artifício para a barra V-Teta não interfir no teste de convergência
     for k in range(0,d.nb):
@@ -190,9 +193,9 @@ while (iter < 30):
 
         
         dx = []
-        ud = UniversoDiscurso(DP, G, B, d.e, d.f, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
+        ud = UniversoDiscurso(DP, G, B, d.vb, d.ab, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
         dfmax,dxmax = ud.calc_dfmax_dxmax()        
-        f = FuzzyInfSystem(dfmax,dxmax,0.1,0.01)
+        f = FuzzyInfSystem(dfmax,dxmax,0.1,0.0001)
         x = f.pert_funcs_df()
         y = f.pert_funcs_dx()
         for k in range(0,d.nb):
@@ -211,8 +214,8 @@ while (iter < 30):
         
         #atualizar os angulos
         for k in range(0,d.nb):
-            #d.ab[k] = d.ab[k] + dx[k]
-            d.e[k] =d.e[k]+ dx[k]
+            d.ab[k] = d.ab[k] + dx[k]
+            #d.e[k] =d.e[k]+ dx[k]
         #--
 
         log.write_log_space()
@@ -247,7 +250,9 @@ while (iter < 30):
         fm = FuzzyMath(d.f[m])
         DQ[k] = DQ[k] - fk * (em * float(G[k,m]) - fm * float(B[k,m])) - ek * (fm * float(G[k,m]) + em * float(B[k,m]))
     '''   
+    DQCALC = calc_dpcalc(d.nb,d.nr,d.bini,d.bfim,G,B,d.vb,d.ab,d.sbase)
 
+    '''
     for k in range(0,d.nb):
             e = FuzzyMath(d.e[k]) # criar número fuzzy a partir dos pontos do triangulo
             f = FuzzyMath(d.f[k]) # criar número fuzzy a partir dos pontos do triangulo
@@ -263,7 +268,7 @@ while (iter < 30):
         fk = FuzzyMath(d.f[k])
         fm = FuzzyMath(d.f[m])
         DQCALC[k] = DQCALC[k] - fk * (em * float(G[k,m]) - fm * float(B[k,m])) - ek * (fm * float(G[k,m]) + em * float(B[k,m]))
-
+    '''
 
     log.write_log(">>> DQ CALC")
     for i in range(0,6):
@@ -290,15 +295,11 @@ while (iter < 30):
     else: #Correção dos módulos de tensões de barra
         #d.vb = d.vb + np.matmul(B2L,DQ) #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<       
         #--
-               
-        log.write_log(">>> DX  >>> Q >>> delta v ")
-        log.write_log(str(dx))
-
 
         dx = []
-        ud = UniversoDiscurso(DQ, G, B, d.e, d.f, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
+        ud = UniversoDiscurso(DQ, G, B, d.vb, d.ab, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
         dfmax,dxmax = ud.calc_dfmax_dxmax()        
-        f = FuzzyInfSystem(dfmax,dxmax,0.1,0.01)
+        f = FuzzyInfSystem(dfmax,dxmax,0.1,0.0001)
         x = f.pert_funcs_df()
         y = f.pert_funcs_dx()
         for k in range(0,d.nb):
@@ -310,11 +311,14 @@ while (iter < 30):
                 dx.append(f.calc_centroide(mfs_agregadas))
             else:
                 dx.append(0)
+        
+        log.write_log(">>> DX  >>> Q >>> delta v ")
+        log.write_log(str(dx))
 
         #atualizar os módulos de tensão
         for k in range(0,d.nb):
-            #d.vb[k] = d.vb[k] + dx[k]
-            d.f[k] =d.f[k]+ dx[k]
+            d.vb[k] = d.vb[k] + dx[k]
+            #d.f[k] =d.f[k]+ dx[k]
         #--             
 
         log.write_log(">>> Módulo de Tensão")

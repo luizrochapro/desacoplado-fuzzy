@@ -34,7 +34,7 @@ class UniversoDiscurso:
             # o cálculo do H
             for k in range(0,self.nb):
                 if self.tb[k] != 2:
-                    H[k,t] = 2*e[k] * self.G[k,k]
+                    H[k,t] = -1*self.B[k,k] * np.square(e[k])
             
             for r in range(0,self.nr):
                 if self.tb[k] != 2:
@@ -42,23 +42,27 @@ class UniversoDiscurso:
                     m = self.bfim[r]
                     k = k-1 #correção da dimensao para python
                     m = m-1 #correção da dimensao para python
-                    H[k,m] = e[k] * self.G[k,m] + f[k] * self.B[k,m]    
+                    #H[k,m] = e[k] * self.G[k,m] + f[k] * self.B[k,m]  
+                    H[k,t] = H[k,t] - e[k]*e[m]*(self.G[k,m]*np.sin(f[k]-f[m])-self.B[k,m]*np.cos(f[k]-f[m]))  
             
             # o cálculo do L depende do tipo de barra
             for k in range(0, self.nb):
-                if self.tb[k] == 1: # Barra PV
-                    L[k,t] = 2*f[k]
-                elif self.tb[k] == 0: # Barra PQ
-                    L[k,t] = -2*f[k]*self.B[k,k]
+                #if self.tb[k] == 1: # Barra PV
+                    #L[k,t] = 2*f[k]
+                L[k,t] = -1*self.B[k,k]*np.square(e[k])
+                #elif self.tb[k] == 0: # Barra PQ
+                #    L[k,t] = -2*f[k]*self.B[k,k]
                     
-                    for k in range(0,self.nr):
-                        k = self.bini[r]
-                        m = self.bfim[r]
-                        k = k-1 #correção da dimensao para python
-                        m = m-1 #correção da dimensao para python
-                        L[k,t] = L[k,t] + e[m]*self.G[k,m]-f[m]*self.B[k,m]
-                else:
-                    None
+            for k in range(0,self.nr):
+                k = self.bini[r]
+                m = self.bfim[r]
+                k = k-1 #correção da dimensao para python
+                m = m-1 #correção da dimensao para python
+                #L[k,t] = L[k,t] + e[m]*self.G[k,m]-f[m]*self.B[k,m]
+                L[k,t] = L[k,t] + e[m]*(self.G[k,m]*np.sin(f[k]-f[m])-self.B[k,m]*np.cos(f[k]-f[m]))
+                #else:
+                #    None
+            '''
             for r in range(0, self.nr):
                 if self.tb[k] == 1:
                     k = self.bini[r]
@@ -74,7 +78,7 @@ class UniversoDiscurso:
                     L[k,t] = -e[k]*self.G[k,m]-f[k]*self.B[k,m] 
                 else:
                     None         
-        
+                '''
         aux = np.absolute(self.DP[:])
         ind  = np.unravel_index(np.argmax(aux, axis=None), aux.shape)
         dFmax = aux[ind]

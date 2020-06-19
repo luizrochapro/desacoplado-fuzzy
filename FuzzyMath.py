@@ -32,12 +32,20 @@ class FuzzyMath:
         s.f[2] = self.f[2] + mf.f[2]
         s.pertf = (self.pertf + mf.pertf) - (self.pertf * mf.pertf)
         return s
-
+    '''
     def __sub__ (self, mf):
         s = FuzzyMath()
         s.f[0] = self.f[0] - mf.f[2]
         s.f[1] = self.f[1] - mf.f[1]
         s.f[2] = self.f[2] - mf.f[0]
+        s.pertf = (self.pertf - mf.pertf) + (self.pertf * mf.pertf)
+        return s
+    '''
+    def __sub__ (self, mf):
+        s = FuzzyMath()
+        s.f[0] = np.min([self.f[0] - mf.f[0], self.f[2] - mf.f[2]])
+        s.f[2] = np.max([self.f[0] - mf.f[0], self.f[2] - mf.f[2]])
+        s.f[1] = (s.f[0] + s.f[2])/2
         s.pertf = (self.pertf - mf.pertf) + (self.pertf * mf.pertf)
         return s
 
