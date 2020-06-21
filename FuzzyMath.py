@@ -53,9 +53,15 @@ class FuzzyMath:
             s.f[2] = self.f[2] * p
             #s.pertf = 1 - (1-self.pertf)**p
         else:
-            s.f[0] = self.f[0] * p.f[0]
-            s.f[1] = self.f[1] * p.f[1]
-            s.f[2] = self.f[2] * p.f[2]
+            aX = np.absolute((self.f[2]-self.f[0])/2)
+            aY = np.absolute((p.f[2]-p.f[0])/2)
+            mX = self.f[1]
+            mY = p.f[1]
+            mA = mX*mX
+            aOrd =np.sort([np.absolute(mA - ((mX - aX )*(mY - aY))),np.absolute(mA - ((mX - aX )*(mY + aY ))),np.absolute(mA - ((mX + aX )*(mY - aY ))),np.absolute(mA - ((mX + aX )*(mY + aY )))])
+            s.f[1] = mA
+            s.f[0] = mA - aOrd[1]/2
+            s.f[2] = mA + aOrd[1]/2
             s.pertf = self.pertf * p.pertf
         return s
 
@@ -71,4 +77,28 @@ class FuzzyMath:
         s = FuzzyMath()
         s.f = self.f ** lamb
         s.pertf = self.pertf ** lamb
+        return s
+    
+    def cos(self):
+        s = FuzzyMath()
+        m = self.f[1]
+        a = np.absolute((self.f[2]-self.f[0])/2)
+        mcos   =  (np.cos(m - a) + np.cos(m + a)) / 2
+        acos   = (np.absolute((np.absolute(mcos)-np.absolute(np.cos(m - a)))) + np.absolute((np.absolute(mcos) + np.absolute(np.cos(m + a)))))/2
+        s.f[1] = mcos
+        s.f[0] = mcos - acos/2
+        s.f[2] = mcos + acos/2
+        #s.pertf = self.pertf * p.pertf
+        return s
+
+    def sen(self):
+        s = FuzzyMath()
+        m = self.f[1]
+        a = np.absolute((self.f[2]-self.f[0])/2)
+        msin   =  (np.sin(m - a) + np.sin(m + a)) / 2
+        asin   = (np.absolute((np.absolute(msin)-np.absolute(np.sin(m - a)))) + np.absolute((np.absolute(msin) + np.absolute(np.sin(m + a)))))/2
+        s.f[1] = msin
+        s.f[0] = msin - asin/2
+        s.f[2] = msin + asin/2
+        #s.pertf = self.pertf * p.pertf
         return s
