@@ -32,7 +32,7 @@ class FuzzyMath:
         s.f[2] = self.f[2] + mf.f[2]
         s.pertf = (self.pertf + mf.pertf) - (self.pertf * mf.pertf)
         return s
-
+    '''
     def __sub__ (self, mf):
         s = FuzzyMath()
         s.f[0] = self.f[0] - mf.f[2]
@@ -40,6 +40,15 @@ class FuzzyMath:
         s.f[2] = self.f[2] - mf.f[0]
         s.pertf = (self.pertf - mf.pertf) + (self.pertf * mf.pertf)
         return s
+    '''
+    def __sub__ (self, mf):
+        s = FuzzyMath()
+        s.f[0] = np.min([self.f[0] - mf.f[0], self.f[2] - mf.f[2]])
+        s.f[2] = np.max([self.f[0] - mf.f[0], self.f[2] - mf.f[2]])
+        s.f[1] = (s.f[0] + s.f[2])/2
+        s.pertf = (self.pertf - mf.pertf) + (self.pertf * mf.pertf)
+        return s
+
 
     def __mul__ (self, p):
         s = FuzzyMath()
@@ -101,4 +110,12 @@ class FuzzyMath:
         s.f[0] = msin - asin/2
         s.f[2] = msin + asin/2
         #s.pertf = self.pertf * p.pertf
+        return s
+    
+    def convToArray(self):
+        s = np.zeros((len(self),3))
+        for k in range(len(s)):
+            s[k,0] = self[k].f[0]
+            s[k,1] = self[k].f[1]
+            s[k,2] = self[k].f[2]  
         return s

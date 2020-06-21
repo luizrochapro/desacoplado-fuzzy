@@ -129,23 +129,6 @@ while (iter < 30):
     
     DP = []
     PCALC = []
-    '''
-    for k in range(0,d.nb):
-            e = FuzzyMath(d.e[k]) # criar número fuzzy a partir dos pontos do triangulo
-            f = FuzzyMath(d.f[k]) # criar número fuzzy a partir dos pontos do triangulo
-            DP.append(d.pliq[k] - ((e * e) + (f * f)) * float(G[k,k]))
-
-    for r in range(0,d.nr):
-        k = d.bini[r] 
-        m = d.bfim[r] 
-        k = k-1 #correção da dimensao para python
-        m = m-1 #correção da dimensao para python       
-        ek = FuzzyMath(d.e[k])
-        em = FuzzyMath(d.e[m])
-        fk = FuzzyMath(d.f[k])
-        fm = FuzzyMath(d.f[m])
-        DP[k] = DP[k] - ek * (em * float(G[k,m]) - fm * float(B[k,m])) + fk * (fm * float(G[k,m]) + em * float(B[k,m]))
-    '''
     
     for k in range(0,d.nb):
             PCALC.append(vb[k]**2 * float(G[k,k]))
@@ -156,18 +139,17 @@ while (iter < 30):
         k = k-1 #correção da dimensao para python
         m = m-1 #correção da dimensao para python       
         dt = ab[k] - ab[m]
-        PCALC[k] = PCALC[k] - (vb[k]*vb[m])*(float(G[k,m])*dt.cos()+float(B[k,m])*dt.sen())
-        PCALC[m] = PCALC[m] - (vb[m]*vb[k])*(float(G[m,k])*(-dt).cos()+float(B[m,k])*(-dt).sen())
-    
+        PCALC[k] = PCALC[k] - (vb[k]*vb[m])*(dt.cos()*float(G[k,m]) + dt.sen()*float(B[k,m]))
+        PCALC[m] = PCALC[m] - (vb[m]*vb[k])*((dt*(-1)).cos()*float(G[m,k])+(dt*(-1)).sen()*float(B[m,k]))
 
     
     log.write_log(">>> DP CALC")
     for i in range(0,6):
-        log.write_log(str(DPCALC[i].f))
+        log.write_log(str(PCALC[i].f))
 
     #calcula DP
     for k in range(0,d.nb):
-        DP.append(d.pliq[k] - DPCALC[k])
+        DP.append(d.pliq[k] - PCALC[k])
 
     # Artifício para a barra V-Teta não interfir no teste de convergência
     for k in range(0,d.nb):
@@ -194,7 +176,10 @@ while (iter < 30):
 
         
         dx = []
-        ud = UniversoDiscurso(DP, G, B, d.e, d.f, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
+        vbA = FuzzyMath.convToArray(vb)
+        abA = FuzzyMath.convToArray(ab)
+
+        ud = UniversoDiscurso(DP, G, B, vbA, abA, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
         dfmax,dxmax = ud.calc_dfmax_dxmax()        
         f = FuzzyInfSystem(dfmax,dxmax,0.1,0.01)
         x = f.pert_funcs_df()
@@ -215,13 +200,15 @@ while (iter < 30):
         
         #atualizar os angulos
         for k in range(0,d.nb):
-            #d.ab[k] = d.ab[k] + dx[k]
-            d.e[k] =d.e[k]+ dx[k]
+            ab[k].f[0] = ab[k].f[0] + dx[k]
+            ab[k].f[1] = ab[k].f[1] + dx[k]
+            ab[k].f[2] = ab[k].f[2] + dx[k]
+            #d.e[k] =d.e[k]+ dx[k]
         #--
 
         log.write_log_space()
         log.write_log(">>> Ângulos")
-        log.write_log(str(d.ab))
+        log.write_log(str(FuzzyMath.convToArray(ab)))
         log.write_log_space()
 
         p = p + 0.5
@@ -233,49 +220,28 @@ while (iter < 30):
 
     #DQ = np.zeros((d.nb,1))
     DQ = []
-    DQCALC = []
-    '''
+    QCALC = []
+
     for k in range(0,d.nb):
-            e = FuzzyMath(d.e[k]) # criar número fuzzy a partir dos pontos do triangulo
-            f = FuzzyMath(d.f[k]) # criar número fuzzy a partir dos pontos do triangulo
-            DQ.append(d.qliq[k] + ((e * e) + (f * f)) * float(B[k,k]))
+            QCALC.append(d.qliq[k] + (vb[k]**2)*float(B[k,k]))
 
     for r in range(0,d.nr):
         k = d.bini[r] 
         m = d.bfim[r] 
         k = k-1 #correção da dimensao para python
         m = m-1 #correção da dimensao para python
-        ek = FuzzyMath(d.e[k])
-        em = FuzzyMath(d.e[m])
-        fk = FuzzyMath(d.f[k])
-        fm = FuzzyMath(d.f[m])
-        DQ[k] = DQ[k] - fk * (em * float(G[k,m]) - fm * float(B[k,m])) - ek * (fm * float(G[k,m]) + em * float(B[k,m]))
-    '''   
-
-    for k in range(0,d.nb):
-            e = FuzzyMath(d.e[k]) # criar número fuzzy a partir dos pontos do triangulo
-            f = FuzzyMath(d.f[k]) # criar número fuzzy a partir dos pontos do triangulo
-            DQCALC.append(((e * e) + (f * f)) * float(B[k,k]))
-
-    for r in range(0,d.nr):
-        k = d.bini[r] 
-        m = d.bfim[r] 
-        k = k-1 #correção da dimensao para python
-        m = m-1 #correção da dimensao para python
-        ek = FuzzyMath(d.e[k])
-        em = FuzzyMath(d.e[m])
-        fk = FuzzyMath(d.f[k])
-        fm = FuzzyMath(d.f[m])
-        DQCALC[k] = DQCALC[k] - fk * (em * float(G[k,m]) - fm * float(B[k,m])) - ek * (fm * float(G[k,m]) + em * float(B[k,m]))
+        dt = ab[k] - ab[m]
+        QCALC[k] = QCALC[k] - (vb[k]*vb[m])*(dt.sen()*float(G[k,m])-dt.cos()*float(B[k,m]))
+        QCALC[m] = QCALC[m] - (vb[m]*vb[k])*((dt*(-1)).sen()*float(G[m,k])-(dt*(-1)).cos()*float(B[m,k]))
 
 
     log.write_log(">>> DQ CALC")
     for i in range(0,6):
-        log.write_log(str(DQCALC[i].f))
+        log.write_log(str(QCALC[i].f))
 
     #calcula DQ
     for k in range(0,d.nb):
-        DQ.append(d.qliq[k] - DQCALC[k])
+        DQ.append(d.qliq[k] - QCALC[k])
 
     # Artifício para as barras V-Teta e P-V não interfir no teste de convergência
     for k in range(0,d.nb):
@@ -300,7 +266,10 @@ while (iter < 30):
 
 
         dx = []
-        ud = UniversoDiscurso(DQ, G, B, d.e, d.f, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
+        vbA = FuzzyMath.convToArray(vb)
+        abA = FuzzyMath.convToArray(ab)
+
+        ud = UniversoDiscurso(DQ, G, B, vbA, abA, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
         dfmax,dxmax = ud.calc_dfmax_dxmax()        
         f = FuzzyInfSystem(dfmax,dxmax,0.1,0.01)
         x = f.pert_funcs_df()
@@ -317,12 +286,15 @@ while (iter < 30):
 
         #atualizar os módulos de tensão
         for k in range(0,d.nb):
-            #d.vb[k] = d.vb[k] + dx[k]
-            d.f[k] =d.f[k]+ dx[k]
+            vb[k].f[0] = vb[k].f[0] + dx[k]
+            vb[k].f[1] = vb[k].f[1] + dx[k]
+            vb[k].f[2] = vb[k].f[2] + dx[k]
+
+            #d.f[k] =d.f[k]+ dx[k]
         #--             
 
         log.write_log(">>> Módulo de Tensão")
-        log.write_log(str(d.vb))
+        log.write_log(str(FuzzyMath.convToArray(vb)))
 
 
         q = q + 0.5
