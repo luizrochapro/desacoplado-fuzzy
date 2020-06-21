@@ -141,6 +141,7 @@ while (iter < 30):
         fm = FuzzyMath(d.f[m])
         DP[k] = DP[k] - ek * (em * float(G[k,m]) - fm * float(B[k,m])) + fk * (fm * float(G[k,m]) + em * float(B[k,m]))
     '''
+    
     for k in range(0,d.nb):
             e = FuzzyMath(d.e[k]) # criar número fuzzy a partir dos pontos do triangulo
             f = FuzzyMath(d.f[k]) # criar número fuzzy a partir dos pontos do triangulo
@@ -155,8 +156,9 @@ while (iter < 30):
         em = FuzzyMath(d.e[m])
         fk = FuzzyMath(d.f[k])
         fm = FuzzyMath(d.f[m])
-        DPCALC[k] = DPCALC[k] + (ek * (em * float(G[k,m]) - fm * float(B[k,m])) + fk * (fm * float(G[k,m]) + em * float(B[k,m])))
-        
+        DPCALC[k] = DPCALC[k] + ek * (em * float(G[k,m]) - fm * float(B[k,m])) + fk * (fm * float(G[k,m]) + em * float(B[k,m]))
+
+    
     log.write_log(">>> DP CALC")
     for i in range(0,6):
         log.write_log(str(DPCALC[i].f))
