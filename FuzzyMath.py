@@ -48,7 +48,7 @@ class FuzzyMath:
         s.f[1] = (s.f[0] + s.f[2])/2
         s.pertf = (self.pertf - mf.pertf) + (self.pertf * mf.pertf)
         return s
-
+    
 
     def __mul__ (self, p):
         s = FuzzyMath()
@@ -66,7 +66,7 @@ class FuzzyMath:
             aY = np.absolute((p.f[2]-p.f[0])/2)
             mX = self.f[1]
             mY = p.f[1]
-            mA = mX*mX
+            mA = mX*mY
             aOrd =np.sort([np.absolute(mA - ((mX - aX )*(mY - aY))),np.absolute(mA - ((mX - aX )*(mY + aY ))),np.absolute(mA - ((mX + aX )*(mY - aY ))),np.absolute(mA - ((mX + aX )*(mY + aY )))])
             s.f[1] = mA
             s.f[0] = mA - aOrd[1]/2

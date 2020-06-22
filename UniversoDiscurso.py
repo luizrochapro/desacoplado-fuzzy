@@ -2,82 +2,66 @@
 
 import numpy as np
 import skfuzzy as fuzz
-#from FuzzyMath import *
+from FuzzyMath import *
 
 class UniversoDiscurso:
 
-    def __init__(self,DF,G,B,e,f,nb,nr,bini,bfim,tb):
-        self.DF = DF
+    def __init__(self,DF,G,B,vb,ab,nb,nr,bini,bfim,tb):
+        self.DP = DF
         self.G = G
         self.B = B
-        self.e = e
-        self.f = f
+        self.vb = vb
+        self.ab = ab
         self.nb = nb
         self.nr = nr
         self.bini = bini
         self.bfim = bfim
         self.tb = tb
-        self.DP = np.zeros((self.nb,3))
+        #self.DP = np.zeros((self.nb,3))
     
     def calc_dfmax_dxmax(self):
         '''Função que calcula os novos universos de discurso'''
-        for k in range(0,self.nb): # transferindo objetos FuzzyMath para array bidimensional
-            self.DP[k] = self.DF[k].f
+        #for k in range(0,self.nb): # transferindo objetos FuzzyMath para array bidimensional
+        #    self.DP[k] = self.DF[k].f
+        H = []
+        L = []
+        for k in range(self.nb):
+            H.append((FuzzyMath([0,0,0])))
+            L.append((FuzzyMath([0,0,0])))
 
-        H = np.zeros((self.nb,self.nb))
-        L = np.zeros((self.nb,self.nb))
-        e,f = [],[]
-        for t in range(0,3):
-            for k in range(0,self.nb):
-                e.append(self.e[k][t])
-                f.append(self.f[k][t])
-            # o cálculo do H
-            for k in range(0,self.nb):
-                if self.tb[k] != 2:
-                    H[k,t] = 2*e[k] * self.G[k,k]
-            
-            for r in range(0,self.nr):
-                if self.tb[k] != 2:
-                    k = self.bini[r]
-                    m = self.bfim[r]
-                    k = k-1 #correção da dimensao para python
-                    m = m-1 #correção da dimensao para python
-                    H[k,m] = e[k] * self.G[k,m] + f[k] * self.B[k,m]    
-            
-            # o cálculo do L depende do tipo de barra
-            for k in range(0, self.nb):
-                if self.tb[k] == 1: # Barra PV
-                    L[k,t] = 2*f[k]
-                elif self.tb[k] == 0: # Barra PQ
-                    L[k,t] = -2*f[k]*self.B[k,k]
-                    
-                    for k in range(0,self.nr):
-                        k = self.bini[r]
-                        m = self.bfim[r]
-                        k = k-1 #correção da dimensao para python
-                        m = m-1 #correção da dimensao para python
-                        L[k,t] = L[k,t] + e[m]*self.G[k,m]-f[m]*self.B[k,m]
-                else:
-                    None
-            for r in range(0, self.nr):
-                if self.tb[k] == 1:
-                    k = self.bini[r]
-                    m = self.bfim[r]
-                    k = k-1 #correção da dimensao para python
-                    m = m-1 #correção da dimensao para python
-                    L[k,t] = 0
-                elif self.tb[k] == 0:
-                    k = self.bini[r]
-                    m = self.bfim[r]
-                    k = k - 1
-                    m = m - 1
-                    L[k,t] = -e[k]*self.G[k,m]-f[k]*self.B[k,m] 
-                else:
-                    None         
+        # o cálculo do H
+        for k in range(self.nb):
+            H[k] = (self.vb[k]**2) * (-1) * float(self.B[k,k])
         
-        aux = np.absolute(self.DP[:])
+        for r in range(self.nr):
+            k = self.bini[r]
+            m = self.bfim[r]
+            k = k-1 #correção da dimensao para python
+            m = m-1 #correção da dimensao para python
+            dt = self.ab[k] - self.ab[m]
+            H[k] = H[k] - self.vb[k]*self.vb[m]*(dt.sen()*float(self.G[k,m])-dt.cos()*float(self.B[k,m]))    
+        '''
+        # o cálculo do L depende do tipo de barra
+        for k in range(0,self.nb):
+            #if self.tb[k] != 2:
+            L[k,t] = -1* self.B[k,k] * self.vb[k,t]
+        
+        for r in range(0,self.nr):
+            #if self.tb[k] != 2:
+            k = self.bini[r]
+            m = self.bfim[r]
+            k = k-1 #correção da dimensao para python
+            m = m-1 #correção da dimensao para python
+            dt = self.ab[k] - self.ab[m]
+            L[k,t] = L[k,t] + self.vb[m,t]*(self.G[k,m]*np.sin(dt[t])-self.B[k,m]*np.cos(dt[t]))   
+        '''
+        DF =[]
+        for k in range(self.nb):
+            DF.append([self.DP[k].f[0],self.DP[k].f[1],self.DP[k].f[2]])
+
+        aux = np.absolute(DF[:])
         ind  = np.unravel_index(np.argmax(aux, axis=None), aux.shape)
         dFmax = aux[ind]
-        aux = np.absolute(H[ind])
-        dXmax = (1/aux)*dFmax
+        aux = np.absolute(H[ind[0]].f[ind[1]])
+        dXmax = (1/(aux))*dFmax
         return dFmax, dXmax

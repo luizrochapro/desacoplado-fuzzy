@@ -110,8 +110,18 @@ p = 0
 q = 0
 Kp = 1
 Kq = 1
+DPant = []
+DQant = []
+diffP = []
+err = 1e-2
+presF = 0.01
+presX = 0.001
+for k in range(d.nb):
+    DPant.append(FuzzyMath([0,0,0]))
+    DQant.append(FuzzyMath([0,0,0]))
+    diffP.append(FuzzyMath([0,0,0]))
 
-while (iter < 30):
+while (iter < 1000):
     
     # -------------- CALCULO DO SUBPROBLEMA ATIVO OU P-TETA ---------------
     # Cálculo do vetor de equações básicas (resíduos) DELTA_P
@@ -131,7 +141,7 @@ while (iter < 30):
     PCALC = []
     
     for k in range(0,d.nb):
-            PCALC.append(vb[k]**2 * float(G[k,k]))
+            DP.append(d.pliq[k] - ((vb[k]**2) * float(G[k,k])))
 
     for r in range(0,d.nr):
         k = d.bini[r] 
@@ -139,30 +149,46 @@ while (iter < 30):
         k = k-1 #correção da dimensao para python
         m = m-1 #correção da dimensao para python       
         dt = ab[k] - ab[m]
-        PCALC[k] = PCALC[k] - (vb[k]*vb[m])*(dt.cos()*float(G[k,m]) + dt.sen()*float(B[k,m]))
-        PCALC[m] = PCALC[m] - (vb[m]*vb[k])*((dt*(-1)).cos()*float(G[m,k])+(dt*(-1)).sen()*float(B[m,k]))
+        DP[k] = DP[k] - (dt.cos()*float(G[k,m]) + dt.sen()*float(B[k,m])) * (vb[k]) * (vb[m])
+        DP[m] = DP[m] - (vb[m]*vb[k])*((dt*(-1)).cos()*float(G[m,k])+(dt*(-1)).sen()*float(B[m,k]))
 
     
-    log.write_log(">>> DP CALC")
+    log.write_log(">>> DP ")
     for i in range(0,6):
-        log.write_log(str(PCALC[i].f))
+        log.write_log(str(DP[i].f))
 
     #calcula DP
-    for k in range(0,d.nb):
-        DP.append(d.pliq[k] - PCALC[k])
+    #for k in range(0,d.nb):
+    #    DP.append(d.pliq[k] - PCALC[k])
 
     # Artifício para a barra V-Teta não interfir no teste de convergência
     for k in range(0,d.nb):
         if d.tipo_barras[k] == 2: 
             DP[k] = FuzzyMath(np.array([0,0,0]))
 
+    ###############################################
+    for k in range(d.nb):
+        #ant = DPant[k].f[2]- DPant[k].f[0]
+        #dep = DP[k].f[2] - DP[k].f[0]
+        #diffP[k] = dep - ant
+        diffP[k] = DPant[k] - DP[k]
+
+    log.write_log(">>> diff DP ")
+    for i in range(0,6):
+        log.write_log(str(diffP[i].f))
+    log.write_log(">>> teste conv DP ")
+    for i in range(0,6):
+        log.write_log(str(((DP[i].f[2]-DP[i].f[0])-(DPant[i].f[2]-DPant[i].f[0]))/2))
+    ################################################
+
     # Teste de convergência e obtenção de nova estimativa para os ângulos
     # de tensões de barra
     mod_dp=[]
-    for k in range(0, d.nb):
-        mod_dp.append(np.absolute(DP[k].f[1]))
+    for i in range(d.nb):
+        #if d.tipo_barras[k]!= 2:
+        mod_dp.append(((DP[i].f[2]-DP[i].f[0])-(DPant[i].f[2]-DPant[i].f[0]))/2)
         
-    if np.amax(mod_dp) <= 1e-4: # Teste de convergência subproblema P-Teta 
+    if np.amax(np.absolute(mod_dp)) <= err: # Teste de convergência subproblema P-Teta 
         Kp = 0
         if Kq == 0:
             break  # Sai do processo iterativo
@@ -170,18 +196,19 @@ while (iter < 30):
         #d.ab = d.ab + np.matmul(B1L,DP)  #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         #--
 
-        log.write_log(">>> DP")
-        for i in range(0,6):
-            log.write_log(str(DP[i].f))
+    #    log.write_log(">>> DP")
+    #    for i in range(0,6):
+    #        log.write_log(str(DP[i].f))
 
         
         dx = []
-        vbA = FuzzyMath.convToArray(vb)
-        abA = FuzzyMath.convToArray(ab)
+        #vbA = FuzzyMath.convToArray(vb)
+        #abA = FuzzyMath.convToArray(ab)
 
-        ud = UniversoDiscurso(DP, G, B, vbA, abA, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
-        dfmax,dxmax = ud.calc_dfmax_dxmax()        
-        f = FuzzyInfSystem(dfmax,dxmax,0.1,0.01)
+        ud = UniversoDiscurso(DP, G, B, vb, ab, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
+        dfmax,dxmax = ud.calc_dfmax_dxmax()       
+        print(">>  dfmax={0} >>> dxmax={1}".format(dfmax,dxmax)) 
+        f = FuzzyInfSystem(dfmax,dxmax,presF,presX)
         x = f.pert_funcs_df()
         y = f.pert_funcs_dx()
         for k in range(0,d.nb):
@@ -208,7 +235,7 @@ while (iter < 30):
 
         log.write_log_space()
         log.write_log(">>> Ângulos")
-        log.write_log(str(FuzzyMath.convToArray(ab)))
+        log.write_log(str(FuzzyMath.convToArray(ab)*180/np.pi))
         log.write_log_space()
 
         p = p + 0.5
@@ -220,10 +247,10 @@ while (iter < 30):
 
     #DQ = np.zeros((d.nb,1))
     DQ = []
-    QCALC = []
+    #QCALC = []
 
     for k in range(0,d.nb):
-            QCALC.append(d.qliq[k] + (vb[k]**2)*float(B[k,k]))
+            DQ.append(d.qliq[k] + (vb[k]**2)*float(B[k,k]))
 
     for r in range(0,d.nr):
         k = d.bini[r] 
@@ -231,29 +258,30 @@ while (iter < 30):
         k = k-1 #correção da dimensao para python
         m = m-1 #correção da dimensao para python
         dt = ab[k] - ab[m]
-        QCALC[k] = QCALC[k] - (vb[k]*vb[m])*(dt.sen()*float(G[k,m])-dt.cos()*float(B[k,m]))
-        QCALC[m] = QCALC[m] - (vb[m]*vb[k])*((dt*(-1)).sen()*float(G[m,k])-(dt*(-1)).cos()*float(B[m,k]))
+        DQ[k] = DQ[k] - (vb[k]*vb[m])*(dt.sen()*float(G[k,m])-dt.cos()*float(B[k,m]))
+        DQ[m] = DQ[m] - (vb[m]*vb[k])*((dt*(-1)).sen()*float(G[m,k])-(dt*(-1)).cos()*float(B[m,k]))
 
 
-    log.write_log(">>> DQ CALC")
+    log.write_log(">>> DQ ")
     for i in range(0,6):
-        log.write_log(str(QCALC[i].f))
+        log.write_log(str(DQ[i].f))
 
     #calcula DQ
-    for k in range(0,d.nb):
-        DQ.append(d.qliq[k] - QCALC[k])
+    #for k in range(0,d.nb):
+    #    DQ.append(d.qliq[k] - QCALC[k])
 
     # Artifício para as barras V-Teta e P-V não interfir no teste de convergência
     for k in range(0,d.nb):
-        if d.tipo_barras[k] == 2:
+        if d.tipo_barras[k] != 0:
             DQ[k] = FuzzyMath(np.array([0,0,0]))
     
     # Teste de convergÊncia e obtenção de nova estimativa para os módulos de tensões de barra
     mod_dq=[]
     for k in range(0, d.nb):
-        mod_dq.append(np.absolute(DQ[k].f[1]))
+        #if d.tipo_barras[k]==0:
+        mod_dq.append(((DQ[i].f[2]-DQ[i].f[0])-(DQant[i].f[2]-DQant[i].f[0]))/2)
 
-    if np.amax(mod_dp) <= 1e-4: # Teste de convergência subproblema Q-V 
+    if np.amax(np.absolute(mod_dq)) <= err: # Teste de convergência subproblema Q-V 
         Kq = 0
         if Kp == 0:
             break #Sai do processo iterativo
@@ -266,12 +294,13 @@ while (iter < 30):
 
 
         dx = []
-        vbA = FuzzyMath.convToArray(vb)
-        abA = FuzzyMath.convToArray(ab)
+        #vbA = FuzzyMath.convToArray(vb)
+        #abA = FuzzyMath.convToArray(ab)
 
-        ud = UniversoDiscurso(DQ, G, B, vbA, abA, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
+        ud = UniversoDiscurso(DQ, G, B, vb, ab, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
         dfmax,dxmax = ud.calc_dfmax_dxmax()        
-        f = FuzzyInfSystem(dfmax,dxmax,0.1,0.01)
+        print(">>  dfmax={0} >>> dxmax={1}".format(dfmax,dxmax)) 
+        f = FuzzyInfSystem(dfmax,dxmax,presF,presX)
         x = f.pert_funcs_df()
         y = f.pert_funcs_dx()
         for k in range(0,d.nb):
@@ -300,9 +329,13 @@ while (iter < 30):
         q = q + 0.5
     
     iter = p + q
+    print('iter={}'.format(iter))
+    DPant = DP
+    DQant = DQ
 
 #fechando arquivo de log
 log.close_file()
+
 # ===================== CÁLCULO DO SUBSISTEMA 2 ===========================
 # OBS: Pliq de barras PV e PQ, e Qliq de barras PQ, são dados do problema
 # mas sãoo aqui recalculados para se certificar que os resultados obtidos na
