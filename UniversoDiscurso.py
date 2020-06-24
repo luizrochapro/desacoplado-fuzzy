@@ -57,9 +57,10 @@ class UniversoDiscurso:
         '''
         DF =[]
         for k in range(self.nb):
-            DF.append([self.DP[k].f[0],self.DP[k].f[1],self.DP[k].f[2]])
+            DF.append([self.DP[k].f[0], self.DP[k].f[1], self.DP[k].f[2]])
 
         aux = np.absolute(DF[:])
+        #ind  = np.unravel_index(aux[:,1].max(), aux.shape)
         ind  = np.unravel_index(np.argmax(aux, axis=None), aux.shape)
         dFmax = aux[ind]
         aux = np.absolute(H[ind[0]].f[ind[1]])

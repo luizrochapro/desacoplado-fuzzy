@@ -113,15 +113,18 @@ Kq = 1
 DPant = []
 DQant = []
 diffP = []
+
 err = 1e-2
 presF = 0.01
-presX = 0.001
+presX = 0.00001
+maxiter = 500
+
 for k in range(d.nb):
     DPant.append(FuzzyMath([0,0,0]))
     DQant.append(FuzzyMath([0,0,0]))
     diffP.append(FuzzyMath([0,0,0]))
 
-while (iter < 1000):
+while (iter < maxiter):
     
     # -------------- CALCULO DO SUBPROBLEMA ATIVO OU P-TETA ---------------
     # Cálculo do vetor de equações básicas (resíduos) DELTA_P
@@ -202,6 +205,7 @@ while (iter < 1000):
 
         
         dx = []
+        som, mom, lom = np.zeros((d.nb,1)), np.zeros((d.nb,1)), np.zeros((d.nb,1))
         #vbA = FuzzyMath.convToArray(vb)
         #abA = FuzzyMath.convToArray(ab)
 
@@ -218,6 +222,9 @@ while (iter < 1000):
                 mfs_saida = f.calc_mfs_saida(act_mfs, y)
                 mfs_agregadas = f.agregar_mfs_saida(mfs_saida)
                 dx.append(f.calc_centroide(mfs_agregadas))
+                som[k]=fuzz.defuzzify.defuzz(f.uni_dis_X,mfs_agregadas,'som')
+                mom[k]=fuzz.defuzzify.defuzz(f.uni_dis_X,mfs_agregadas,'mom')
+                lom[k]=fuzz.defuzzify.defuzz(f.uni_dis_X,mfs_agregadas,'lom')
             else:
                 dx.append(0)
         log.write_log_space()                
@@ -227,9 +234,9 @@ while (iter < 1000):
         
         #atualizar os angulos
         for k in range(0,d.nb):
-            ab[k].f[0] = ab[k].f[0] + dx[k]
-            ab[k].f[1] = ab[k].f[1] + dx[k]
-            ab[k].f[2] = ab[k].f[2] + dx[k]
+            ab[k].f[0] = ab[k].f[0] + som[k] #dx[k]
+            ab[k].f[1] = ab[k].f[1] + mom[k] #dx[k]
+            ab[k].f[2] = ab[k].f[2] + lom[k] #dx[k]
             #d.e[k] =d.e[k]+ dx[k]
         #--
 
@@ -294,6 +301,7 @@ while (iter < 1000):
 
 
         dx = []
+        som, mom, lom = np.zeros((d.nb,1)), np.zeros((d.nb,1)), np.zeros((d.nb,1))
         #vbA = FuzzyMath.convToArray(vb)
         #abA = FuzzyMath.convToArray(ab)
 
@@ -310,14 +318,17 @@ while (iter < 1000):
                 mfs_saida = f.calc_mfs_saida(act_mfs, y)
                 mfs_agregadas = f.agregar_mfs_saida(mfs_saida)
                 dx.append(f.calc_centroide(mfs_agregadas))
+                som[k]=fuzz.defuzzify.defuzz(f.uni_dis_X,mfs_agregadas,'som')
+                mom[k]=fuzz.defuzzify.defuzz(f.uni_dis_X,mfs_agregadas,'mom')
+                lom[k]=fuzz.defuzzify.defuzz(f.uni_dis_X,mfs_agregadas,'lom')
             else:
                 dx.append(0)
 
         #atualizar os módulos de tensão
         for k in range(0,d.nb):
-            vb[k].f[0] = vb[k].f[0] + dx[k]
-            vb[k].f[1] = vb[k].f[1] + dx[k]
-            vb[k].f[2] = vb[k].f[2] + dx[k]
+            vb[k].f[0] = vb[k].f[0] + som[k] #dx[k]
+            vb[k].f[1] = vb[k].f[1] + mom[k] #dx[k]
+            vb[k].f[2] = vb[k].f[2] + lom[k] #dx[k]
 
             #d.f[k] =d.f[k]+ dx[k]
         #--             
@@ -332,6 +343,14 @@ while (iter < 1000):
     print('iter={}'.format(iter))
     DPant = DP
     DQant = DQ
+
+log.write_log_space()
+log.write_log(">>> Ângulos")
+log.write_log(str(FuzzyMath.convToArray(ab)*180/np.pi))
+log.write_log_space()
+
+log.write_log(">>> Módulo de Tensão")
+log.write_log(str(FuzzyMath.convToArray(vb)))
 
 #fechando arquivo de log
 log.close_file()
