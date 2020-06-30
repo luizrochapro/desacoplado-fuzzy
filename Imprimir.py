@@ -10,7 +10,7 @@ class Imprimir:
         self.path_file  = path_file
         self.d = d
 
-    def write_results(self,Pij, Qij, Pi, Qi, Pg, Qg, Lpij, Lqij, Pik, Qik, PerdasPik):
+    def write_results(self,Pij, Qij, Pi, Qi, Pg, Qg, Lpij, Lqij, Pik, Pki,Qik, PerdasPik):
         self.file = open(self.path_file,'w', encoding='utf-8') #abre arquivo
         self.file.write('{0:*^120s}'.format('VALORES DETERMINÍSTICOS') + '\n')
         self.file.write('\n')
@@ -72,7 +72,7 @@ class Imprimir:
         for m in range(self.d.nr):
             i = self.d.bini[m]
             j = self.d.bfim[m]
-            self.file.write('{0:^4d}{1:^2}{2:^4d}{3:>10.2f}{4:>10.2f}{5:>10.2f}{6:^10}{7:^4d}{8:^2}{9:^4d}{10:>10.2f}{11:>10.2f}{12:>10.2f}{13:^10}'.format(i,'-',j, Pik[m,0], Pik[m,1], Pik[m,2],'|',j,'-',i,Pik[m,0], Pik[m,1], Pik[m,2],'|') +'\n')
+            self.file.write('{0:^4d}{1:^2}{2:^4d}{3:>10.2f}{4:>10.2f}{5:>10.2f}{6:^10}{7:^4d}{8:^2}{9:^4d}{10:>10.2f}{11:>10.2f}{12:>10.2f}{13:^10}'.format(i,'-',j, Pik[m,0], Pik[m,1], Pik[m,2],'|',j,'-',i,Pki[m,0], Pki[m,1], Pki[m,2],'|') +'\n')
         self.file.write(''+'\n')
         self.file.write('{:-^120s}'.format('-') + '\n')
 

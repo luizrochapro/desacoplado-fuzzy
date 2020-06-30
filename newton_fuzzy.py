@@ -4,9 +4,10 @@ from Imprimir import *
 from FuzzyMath import *
 
 #filein = 'sis3_2.dat'
-filein = 'sis13_2.dat'
-#filein = 'sis6.dat'
+#filein = 'sis13_2.dat'
+filein = 'sis6.dat'
 #filein = 'sis14.dat'
+#filein = 'sis14radial.dat'
 
 v, ang, J, Pij, Qij, Pi, Qi, Pg, Qg, Lpij, Lqij, Y, d, npvpq, npq = newton(filein)
 
@@ -241,11 +242,122 @@ for m in range(d.nr):
     #k -= 1
     PerdasPik[m,:] = Lpij[m] + dPerPik[m]   
 
+########################
+#%%
+# derivadas parciais para fluxo ativo
+dPkm = np.zeros((4,d.nr))
+for i in range(d.nr):
+    k = d.bini[i]
+    m = d.bfim[i]
+    k -= 1
+    m -= 1
+    dPkm[0,m] = 2 * G[k,m] * d.vb[k,1] - d.vb[m,1] * (G[k,m] * np.cos(d.ab[k,1]-d.ab[m,1]) + B[k,m] * np.sin(d.ab[k,1]-d.ab[m,1])) # derivada / Vk   
+    dPkm[1,m] = -d.vb[k,1] * (G[k,m] * np.cos(d.ab[k,1]-d.ab[m,1]) + B[k,m] * np.sin(d.ab[k,1]-d.ab[m,1])) # derivada / Vm
+    dPkm[2,m] = d.vb[k,1] * d.vb[m,1] * (B[k,m] * np.cos(d.ab[k,1]-d.ab[m,1]) - G[k,m] * np.sin(d.ab[k,1]-d.ab[m,1])) # derivada / tetak   
+    dPkm[3,m] = -d.vb[k,1] * d.vb[m,1] * (G[k,m] * np.sin(d.ab[k,1]-d.ab[m,1]) - B[k,m] * np.cos(d.ab[k,1]-d.ab[m,1])) # derivada / tetam  
 
+# derivadas parciais para fluxo ativo
+dPmk = np.zeros((4,d.nr))
+for i in range(d.nr):
+    k = d.bini[i]
+    m = d.bfim[i]
+    k -= 1
+    m -= 1
+    dPmk[0,m] = d.vb[m,1] * (G[k,m] * np.cos(d.ab[k,1]-d.ab[m,1]) - B[k,m] * np.sin(d.ab[k,1]-d.ab[m,1])) # derivada / Vk   
+    dPmk[1,m] = 2*G[k,m]*d.vb[m,1] - d.vb[k,1]*(G[k,m] * np.cos(d.ab[k,1]-d.ab[m,1]) - B[k,m] * np.sin(d.ab[k,1]-d.ab[m,1])) # derivada / Vm
+    dPmk[2,m] = -d.vb[k,1] * d.vb[m,1] * (-B[k,m] * np.cos(d.ab[k,1]-d.ab[m,1]) - G[k,m] * np.sin(d.ab[k,1]-d.ab[m,1])) # derivada / tetak   
+    dPmk[3,m] = -d.vb[k,1] * d.vb[m,1] * (G[k,m] * np.sin(d.ab[k,1]-d.ab[m,1]) + B[k,m] * np.cos(d.ab[k,1]-d.ab[m,1])) # derivada / tetam  
+
+dQkm = np.zeros((4,d.nr))
+for i in range(d.nr):
+    k = d.bini[i]
+    m = d.bfim[i]
+    k -= 1
+    m -= 1
+    dQkm[0,m] = -2 * B[k,m] * d.vb[k,1] - d.vb[m,1] * (G[k,m] * np.sin(d.ab[k,1]-d.ab[m,1]) - B[k,m] * np.cos(d.ab[k,1]-d.ab[m,1])) # derivada / Vk   
+    dQkm[1,m] = -d.vb[k,1] * (G[k,m] * np.sin(d.ab[k,1]-d.ab[m,1]) - B[k,m] * np.cos(d.ab[k,1]-d.ab[m,1])) # derivada / Vm
+    dQkm[2,m] = -d.vb[k,1] * d.vb[m,1] * (G[k,m] * np.cos(d.ab[k,1]-d.ab[m,1]) + B[k,m] * np.sin(d.ab[k,1]-d.ab[m,1])) # derivada / tetak   
+    dQkm[3,m] = -d.vb[k,1] * d.vb[m,1] * (-G[k,m] * np.cos(d.ab[k,1]-d.ab[m,1]) - B[k,m] * np.sin(d.ab[k,1]-d.ab[m,1])) # derivada / tetam  
+
+dQmk = np.zeros((4,d.nr))
+for i in range(d.nr):
+    k = d.bini[i]
+    m = d.bfim[i]
+    k -= 1
+    m -= 1
+    dQmk[0,m] = d.vb[m,1] * (G[k,m] * np.sin(d.ab[k,1]-d.ab[m,1]) + B[k,m] * np.cos(d.ab[k,1]-d.ab[m,1])) # derivada / Vk   
+    dQmk[1,m] = -2*d.vb[m,1] * B[k,m] + d.vb[k,1]*(G[k,m] * np.sin(d.ab[k,1]-d.ab[m,1]) + B[k,m] * np.cos(d.ab[k,1]-d.ab[m,1])) # derivada / Vm
+    dQmk[2,m] = d.vb[k,1] * d.vb[m,1] * (-B[k,m] * np.sin(d.ab[k,1]-d.ab[m,1]) + G[k,m] * np.cos(d.ab[k,1]-d.ab[m,1])) # derivada / tetak   
+    dQmk[3,m] = d.vb[k,1] * d.vb[m,1] * (B[k,m] * np.sin(d.ab[k,1]-d.ab[m,1]) - G[k,m] * np.cos(d.ab[k,1]-d.ab[m,1])) # derivada / tetam  
+
+
+#calculo matriz sensibilidade para potência ativa
+Epd = np.zeros((d.nr,npvpq+npq))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    Epd[m,:] = (dPkm[0,m] * JinvExpV[i,:]) + (dPkm[1,m] * JinvExpV[k,:]) + (dPkm[2,m] * JinvExpT[i,:]) + (dPkm[3,m] * JinvExpT[k,:])
+
+#calculo matriz sensibilidade para potência reativa
+Epc = np.zeros((d.nr,npvpq+npq))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    Epc[m,:] = (dPmk[0,m] * JinvExpV[i,:]) + (dPmk[1,m] * JinvExpV[k,:]) + (dPmk[2,m] * JinvExpT[i,:]) + (dPmk[3,m] * JinvExpT[k,:])
+
+
+ddPmk = np.zeros((d.nr,3))
+for m in range(d.nr):
+    for j in range(npvpq+npq):
+        aux = Epd[m,j] * dZPdZQ[j,:]
+        if Epd[m,j] < 0:
+            a = aux[0]
+            c = aux[2]
+            aux[0] = c
+            aux[2] = a 
+        ddPmk[m,:] = ddPmk[m,:] + aux
+
+ddPkm = np.zeros((d.nr,3))
+for m in range(d.nr):
+    for j in range(npvpq+npq):
+        aux = Epc[m,j] * dZPdZQ[j,:]
+        if Epc[m,j] < 0:
+            a = aux[0]
+            c = aux[2]
+            aux[0] = c
+            aux[2] = a 
+        ddPkm[m,:] = ddPkm[m,:] + aux
+
+Pik = np.zeros((d.nr,3))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    Pik[m,:] = Pij[i,k] + ddPmk[m]   
+
+Pki = np.zeros((d.nr,3))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    Pki[m,:] = Pij[k,i] + ddPkm[m]   
+
+PerdasPik = np.zeros((d.nr,3))
+for m in range(d.nr):
+    PerdasPik[m,:] = Pik[m] + Pki[m]   
+
+#%%
+#######################
 #S = np.matmul(dPerdasik , Jinv) 
 
 #imprimir resultados no arquivo de saída
 printer = Imprimir('saídas/resultados_{0}'.format(filein), d)
-printer.write_results(Pij, Qij, Pi, Qi, Pg, Qg, Lpij, Lqij, Pik, Qik, PerdasPik)
+printer.write_results(Pij, Qij, Pi, Qi, Pg, Qg, Lpij, Lqij, Pik, Pki, Qik, PerdasPik)
 
 print('Fim processamento')
