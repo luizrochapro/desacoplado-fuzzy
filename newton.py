@@ -43,7 +43,7 @@ def newton(filein):
     G = np.zeros((d.nb,d.nb))  
     B = np.zeros((d.nb,d.nb)) 
     a = d.ramos[:,5]
-
+    '''
     for k  in range(0,d.nr):
         z[k] = complex(d.ramos[k][2],d.ramos[k][3])
         b[k] = complex(d.ramos[k][4])
@@ -52,22 +52,57 @@ def newton(filein):
 
     # Elementos fora da diagonal da matriz Y
     for k in range(0, d.nr):
-        Y[d.bini[k]-1,d.bfim[k]-1] = Y[d.bini[k]-1,d.bfim[k]-1] - y[k]/a[k]
+        #Y[d.bini[k]-1,d.bfim[k]-1] = Y[d.bini[k]-1,d.bfim[k]-1] - y[k]/a[k]
+        Y[d.bini[k]-1,d.bfim[k]-1] = Y[d.bini[k]-1,d.bfim[k]-1] - y[k]*a[k]
         Y[d.bfim[k]-1,d.bini[k]-1] = Y[d.bini[k]-1,d.bfim[k]-1]
 
     # formação dos elementos da diagonal da matriz Y 
     for m in range(0,d.nb):
         for n in range(0,d.nr):
             if d.bini[n]-1 == m:
-                Y[m,m] = Y[m,m] + y[n]/(np.square(a[n])) + b[n]
+                #Y[m,m] = Y[m,m] + y[n]/(np.square(a[n])) + b[n]
+                Y[m,m] = Y[m,m] + y[n]*(np.square(a[n])) + b[n]
             elif d.bfim[n]-1 == m:
                 Y[m,m] = Y[m,m] + y[n] + b[n]
 
     #matrizes G e B
     G = np.real(Y)  
     B = np.imag(Y)
+    '''
+    # normalização em pu dos dados de shunt
+    bsh_k = d.barras[:,14]/d.sbase
 
+    # normalização em pu dos dados de ramos
+    ### Cálculo das condutâncias e susceptâncias primitivas de ramos
+    gkm = 1 * d.ramos[:,2] / (np.square(d.ramos[:,2]) + np.square(d.ramos[:,3]))
+    bkm = -1 * d.ramos[:,3] / (np.square(d.ramos[:,2]) + np.square(d.ramos[:,3]))
+    xkm = d.ramos[:,3] / 100  # usado na formação da B' do desacoplado XB
+    bsh_km = d.ramos[:,4] #/ (2 * d.sbase) #Susceptância shunt de ramo
+    akm = d.ramos[:,5] #Tap dos transformadores defasadores (se LT, tap deve ser 1,0)
 
+    # ---------- Montagem das matrizes condutância G e susceptância B ---------
+    G = np.zeros((d.nb,d.nb))  
+    B = np.zeros((d.nb,d.nb))
+
+    for k in range(0,d.nb):
+        B[k,k] = bsh_k[k]
+
+    for r in range(0,d.nr):
+        k = d.bini[r] 
+        m = d.bfim[r] 
+        k = k-1 #correção da dimensao para python
+        m = m-1 #correção da dimensao para python
+        G[k,k] = G[k,k] + np.square(akm[r])*gkm[r]     
+        G[k,m] = - akm[r]*gkm[r] 
+        G[m,k] = - akm[r]*gkm[r] 
+        G[m,m] = G[m,m] + gkm[r] 
+        B[k,k] = B[k,k] + bsh_km[r] + np.square(akm[r])*bkm[r] 
+        B[k,m] = - akm[r]*bkm[r] 
+        B[m,k] = - akm[r]*bkm[r] 
+        B[m,m] = B[m,m] + bsh_km[r] + bkm[r]
+
+    Y = G + 1j * B
+    
     # ------- PROCESSO ITERATIVO DO MÉTODO NEWTON RAPSHON --------------------
     ## inicializações
     iter = 0
@@ -134,7 +169,8 @@ def newton(filein):
                 if n == m:
                     for n in range(0,d.nb):
                         N[i,k] = N[i,k] + d.vb[n][1]*(G[m,n]*np.cos(d.ab[m][1]-d.ab[n][1]) + B[m,n]*np.sin(d.ab[m][1]-d.ab[n][1]))
-                    N[i,k] = N[i,k] + 2*d.vb[m][1]*G[m,m]
+                    N[i,k] = N[i,k] + 1*d.vb[m][1]*G[m,m]
+                    #N[i,k] = N[i,k] + d.vb[m][1]*G[m,m]
                 else:
                     N[i,k] = d.vb[m][1] * (G[m,n]*np.cos(d.ab[m][1]-d.ab[n][1]) + B[m,n]*np.sin(d.ab[m][1]-d.ab[n][1]))
 
@@ -159,8 +195,9 @@ def newton(filein):
                 n = np.where(d.tipo_barras==0)[0][k] #pega só as barras que são PQ
                 if n == m:
                     for n in range(0,d.nb):
-                        L[i,k] = L[i,k] + d.vb[n][1]*(G[m,n]*np.sin(d.ab[m][1]-d.ab[n][1]) - B[m,n]*np.cos(d.ab[m][1]-d.ab[n][1]))
-                    L[i,k] = L[i,k] - 2*d.vb[m][1]*B[m,m]
+                        L[i,k] = L[i,k] + d.vb[n][1] * (G[m,n]*np.sin(d.ab[m][1]-d.ab[n][1]) - B[m,n]*np.cos(d.ab[m][1]-d.ab[n][1]))
+                    L[i,k] = L[i,k] - 1*d.vb[m][1]*B[m,m]
+                    #L[i,k] = L[i,k] - d.vb[m][1]*B[m,m]
                 else:
                     L[i,k] = d.vb[m][1] * (G[m,n]*np.sin(d.ab[m][1]-d.ab[n][1]) - B[m,n]*np.cos(d.ab[m][1]-d.ab[n][1]))
 
