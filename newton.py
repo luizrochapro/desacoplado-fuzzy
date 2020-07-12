@@ -102,7 +102,7 @@ def newton(filein):
         B[m,m] = B[m,m] + bsh_km[r] + bkm[r]
 
     Y = G + 1j * B
-    
+
     # ------- PROCESSO ITERATIVO DO MÉTODO NEWTON RAPSHON --------------------
     ## inicializações
     iter = 0
@@ -273,6 +273,35 @@ def newton(filein):
     Pij = np.real(Sij)
     Qij = np.imag(Sij)
 
+    #-------------------------------------------------------------
+    Pij = np.zeros((d.nb,d.nb))
+    Qij = np.zeros((d.nb,d.nb))
+    #Pji = np.zeros((d.nb,1), dtype=complex)
+    #Qji = np.zeros((d.nb,1), dtype=complex)
+
+
+    for r in range(d.nr):
+        k = d.bini[r]
+        m = d.bfim[r]
+        k-=1
+        m-=1
+        tp = akm[r]
+        dt = d.ab[k][1] - d.ab[m][1]
+        # Calculo das inje��es l�quidas de pot�ncia ativa e reativa de barra
+        #Pliq(k) = Pliq(k) + (vb(k)*vb(m)*(G(k,m)*cos(dt)+B(k,m)*sin(dt)))*Sbase ;
+        #Qliq(k) = Qliq(k) + (vb(k)*vb(m)*(G(k,m)*sin(dt)-B(k,m)*cos(dt)))*Sbase ;
+        #Pliq(m) = Pliq(m) + (vb(m)*vb(k)*(G(m,k)*cos(-dt)+B(m,k)*sin(-dt)))*Sbase ;
+        #Qliq(m) = Qliq(m) + (vb(m)*vb(k)*(G(m,k)*sin(-dt)-B(m,k)*cos(-dt)))*Sbase ;
+        #% Calculo dos fluxos de pot�ncia ativa e reativa de ramos
+        Pij[k,m] = (np.square(tp*d.vb[k][1])*gkm[r] - tp*d.vb[k][1]*d.vb[m][1]*gkm[r]*np.cos(dt)- tp*d.vb[k][1]*d.vb[m][1]*bkm[r]*np.sin(dt))*d.sbase
+        Qij[k,m] = (-1*np.square(tp*d.vb[k][1])*(bsh_km[r]+bkm[r]) + tp*d.vb[k][1]*d.vb[m][1]*bkm[r]*np.cos(dt)- tp*d.vb[k][1]*d.vb[m][1]*gkm[r]*np.sin(dt))*d.sbase
+        Pij[m,k] = (np.square(d.vb[m][1])*gkm[r] - tp*d.vb[m][1]*d.vb[k][1]*gkm[r]*np.cos(dt)+ tp*d.vb[m][1]*d.vb[k][1]*bkm[r]*np.sin(dt))*d.sbase
+        Qij[m,k] = (-1*np.square(d.vb[m][1])*(bsh_km[r]+bkm[r]) + tp*d.vb[m][1]*d.vb[k][1]*bkm[r]*np.cos(dt)+tp*d.vb[m][1]*d.vb[k][1]*gkm[r]*np.sin(dt))*d.sbase
+        #% Calculo das perdas de ramos
+        #Pperdas(r) = Pkm(r)+Pmk(r)
+        #Qperdas(r) = Qkm(r)+Qmk(r)
+    #--------------------------------------------------------------------------------------------------------
+
     # Perdas nas linhas
     Lij = np.zeros((d.nr,1), dtype = complex)
     for m in range(0, d.nr):
@@ -302,4 +331,4 @@ def newton(filein):
         print('{} iterações'.format(iter))
 
 
-    return d.vb, d.ab, J, Pij, Qij, Pi, Qi, Pg, Qg, Lpij, Lqij, Y, d , npvpq, npq
+    return d.sbase, d.vb, d.ab, J, Pij, Qij, Pi, Qi, Pg, Qg, Lpij, Lqij, Y, d , npvpq, npq, gkm, bkm, bsh_k, bsh_km, akm
