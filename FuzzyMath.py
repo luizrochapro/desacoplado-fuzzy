@@ -33,7 +33,7 @@ class FuzzyMath:
         s.pertf = (self.pertf + mf.pertf) - (self.pertf * mf.pertf)
         return s
     
-    def __sub__ (self, mf):
+    def  __sub__ (self, mf):
         s = FuzzyMath()
         s.f[0] = self.f[0] - mf.f[2]
         s.f[1] = self.f[1] - mf.f[1]

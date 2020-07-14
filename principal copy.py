@@ -18,6 +18,7 @@ log.open_file()
 
 #Dados de entrada
 filein = 'sis6.dat'
+#filein = 'sis3_2.dat'
 
 # Instancia objeto dados
 d = DadosEntrada('entradas/{0}'.format(filein))
@@ -114,11 +115,10 @@ DPant = []
 DQant = []
 diffP = []
 
-errP = 1e-2
-errQ = 1e-1
+err = 1e-2
 presF = 0.01
 presX = 0.00001
-maxiter = 1500
+maxiter = 2000
 
 for k in range(d.nb):
     DPant.append(FuzzyMath([0,0,0]))
@@ -145,7 +145,8 @@ while (iter < maxiter):
     PCALC = []
     
     for k in range(0,d.nb):
-            DP.append(d.pliq[k] - ((vb[k]**2) * float(G[k,k])))
+        #DP.append(d.pliq[k] - ((vb[k]**2) * float(G[k,k])))
+        DP.append(d.pliq[k] - ((vb[k]**2) * float(G[k,k])))
 
     for r in range(0,d.nr):
         k = d.bini[r] 
@@ -153,12 +154,15 @@ while (iter < maxiter):
         k = k-1 #correção da dimensao para python
         m = m-1 #correção da dimensao para python       
         dt = ab[k] - ab[m]
+        #PCALC[k] = PCALC[k] - (dt.cos()*float(G[k,m]) + dt.sen()*float(B[k,m])) * (vb[k]) * (vb[m])
         DP[k] = DP[k] - (dt.cos()*float(G[k,m]) + dt.sen()*float(B[k,m])) * (vb[k]) * (vb[m])
         DP[m] = DP[m] - (vb[m]*vb[k])*((dt*(-1)).cos()*float(G[m,k])+(dt*(-1)).sen()*float(B[m,k]))
 
+    #for k in range(d.nb):
+    #    DP.append(d.pliq[k]-PCALC[k])
     
     log.write_log(">>> DP ")
-    for i in range(0,6):
+    for i in range(d.nb):
         log.write_log(str(DP[i].f))
 
     #calcula DP
@@ -178,10 +182,10 @@ while (iter < maxiter):
         diffP[k] = DPant[k] - DP[k]
 
     log.write_log(">>> diff DP ")
-    for i in range(0,6):
+    for i in range(d.nb):
         log.write_log(str(diffP[i].f))
     log.write_log(">>> teste conv DP ")
-    for i in range(0,6):
+    for i in range(d.nb):
         log.write_log(str(((DP[i].f[2]-DP[i].f[0])-(DPant[i].f[2]-DPant[i].f[0]))/2))
     ################################################
 
@@ -192,7 +196,7 @@ while (iter < maxiter):
         #if d.tipo_barras[k]!= 2:
         mod_dp.append(((DP[i].f[2]-DP[i].f[0])-(DPant[i].f[2]-DPant[i].f[0]))/2)
         
-    if np.amax(np.absolute(mod_dp)) <= errP: # Teste de convergência subproblema P-Teta 
+    if np.amax(np.absolute(mod_dp)) <= err: # Teste de convergência subproblema P-Teta 
         Kp = 0
         if Kq == 0:
             break  # Sai do processo iterativo
@@ -255,10 +259,10 @@ while (iter < maxiter):
 
     #DQ = np.zeros((d.nb,1))
     DQ = []
-    #QCALC = []
+    QCALC = []
 
     for k in range(0,d.nb):
-            DQ.append(d.qliq[k] + (vb[k]**2)*float(B[k,k]))
+        DQ.append(d.qliq[k] + (vb[k]**2)*float(B[k,k]))
 
     for r in range(0,d.nr):
         k = d.bini[r] 
@@ -266,12 +270,15 @@ while (iter < maxiter):
         k = k-1 #correção da dimensao para python
         m = m-1 #correção da dimensao para python
         dt = ab[k] - ab[m]
+        #QCALC[k] = QCALC[k] - (vb[k]*vb[m])*(dt.sen()*float(G[k,m])-dt.cos()*float(B[k,m]))
         DQ[k] = DQ[k] - (vb[k]*vb[m])*(dt.sen()*float(G[k,m])-dt.cos()*float(B[k,m]))
         DQ[m] = DQ[m] - (vb[m]*vb[k])*((dt*(-1)).sen()*float(G[m,k])-(dt*(-1)).cos()*float(B[m,k]))
 
-
+    #for k in range(d.nb):
+    #    DQ.append(d.qliq[k]-QCALC[k])
+    
     log.write_log(">>> DQ ")
-    for i in range(0,6):
+    for i in range(d.nb):
         log.write_log(str(DQ[i].f))
 
     #calcula DQ
@@ -289,7 +296,7 @@ while (iter < maxiter):
         #if d.tipo_barras[k]==0:
         mod_dq.append(((DQ[i].f[2]-DQ[i].f[0])-(DQant[i].f[2]-DQant[i].f[0]))/2)
 
-    if np.amax(np.absolute(mod_dq)) <= errQ: # Teste de convergência subproblema Q-V 
+    if np.amax(np.absolute(mod_dq)) <= err: # Teste de convergência subproblema Q-V 
         Kq = 0
         if Kp == 0:
             break #Sai do processo iterativo
@@ -368,10 +375,13 @@ Pmk = np.zeros((d.nr,1))
 Qmk = np.zeros((d.nr,1))
 Pperdas = np.zeros((d.nr,1))
 Qperdas = np.zeros((d.nr,1))
+
+
 for k in range(0,d.nb):
     Pliq[k] = G[k,k]*np.square(d.vb[k])*d.sbase
     Qliq[k] = -B[k,k]*np.square(d.vb[k])*d.sbase
     Qsh_k[k] = np.square(d.vb[k])*bsh_k[k]*d.sbase
+
 for r in range(0,d.nr):
     k = d.bini[r] 
     m = d.bfim[r] 
@@ -392,6 +402,7 @@ for r in range(0,d.nr):
     #Calculo das perdas de ramos
     Pperdas[r] = Pkm[r]+Pmk[r]
     Qperdas[r] = Qkm[r]+Qmk[r]
+
 #Imprimir vetor de tensão de barra e ângulo de tensao
 print(np.around(d.vb,4))
 print(np.around((180/np.pi)*d.ab,3))
