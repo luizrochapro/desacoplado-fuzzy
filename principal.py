@@ -11,13 +11,17 @@ from UniversoDiscurso import *
 from FuzzyMath import *
 from FuzzyInfSystem import *
 from Log import *
-
+import matplotlib.pyplot as plt
 #Arquivo de Log
 log = Log('saida.log')
 log.open_file()
 
 #Dados de entrada
-filein = 'sis6.dat'
+#filein = 'sis6.dat'
+#filein = 'sis6_varang.dat'
+#filein = 'sis6_vbcte.dat'
+filein = 'sis3_2.dat'
+
 
 # Instancia objeto dados
 d = DadosEntrada('entradas/{0}'.format(filein))
@@ -29,17 +33,12 @@ d.carregar_dados()
 d.calc_pliq()
 d.calc_qliq()
 
-#Converter em valores fuzzy
-vb, ab = [], []
-for k in range(d.nb):
-    vb.append(FuzzyMath(d.vb[k]))
-    ab.append(FuzzyMath(d.ab[k]))
 #log.write_log_div()
 #log.write_log(d.pliq)
 #log.write_log(d.qliq)
 
 # normalização em pu dos dados de shunt
-bsh_k = d.barras[:,8]/d.sbase
+bsh_k = d.barras[:,12]/d.sbase
 
 # normalização em pu dos dados de ramos
 ### Cálculo das condutâncias e susceptâncias primitivas de ramos
@@ -103,6 +102,16 @@ for k in range (0,d.nb):
 B1L = np.linalg.inv(B1L)
 B2L = np.linalg.inv(B2L)
 
+#calcular dispersão do módulo da tensão e ângulo
+d.calc_disp(B1L,B2L)
+
+#Converter em valores fuzzy
+vb, ab = [], []
+for k in range(d.nb):
+    vb.append(FuzzyMath(d.vb[k]))
+    ab.append(FuzzyMath(d.ab[k]))
+
+
 # ------- PROCESSO ITERATIVO DO MÉTODO DESACOPLADO RÁPIDO VERSÃO XB -------
 ## inicializações
 iter = 0
@@ -114,11 +123,11 @@ DPant = []
 DQant = []
 diffP = []
 
-errP = 1e-2
-errQ = 1e-1
+errP = 1e-5
+errQ = 1e-5
 presF = 0.01
 presX = 0.00001
-maxiter = 1500
+maxiter = 1000
 
 for k in range(d.nb):
     DPant.append(FuzzyMath([0,0,0]))
@@ -153,12 +162,23 @@ while (iter < maxiter):
         k = k-1 #correção da dimensao para python
         m = m-1 #correção da dimensao para python       
         dt = ab[k] - ab[m]
+        dtm = ab[m] - ab[k]
         DP[k] = DP[k] - (dt.cos()*float(G[k,m]) + dt.sen()*float(B[k,m])) * (vb[k]) * (vb[m])
-        DP[m] = DP[m] - (vb[m]*vb[k])*((dt*(-1)).cos()*float(G[m,k])+(dt*(-1)).sen()*float(B[m,k]))
+        DP[m] = DP[m] - (dtm.cos()*float(G[m,k])+ dtm.sen()*float(B[m,k]))* (vb[m]) * (vb[k])
 
+    '''
+    for i in range(d.nb):
+        for r in range(d.nr):
+            k = d.bini[r] 
+            m = d.bfim[r] 
+            k-=1
+            m-=1
+            dt = ab[k] - ab[m]
+            if i == k:
+    '''
     
     log.write_log(">>> DP ")
-    for i in range(0,6):
+    for i in range(d.nb):
         log.write_log(str(DP[i].f))
 
     #calcula DP
@@ -166,7 +186,7 @@ while (iter < maxiter):
     #    DP.append(d.pliq[k] - PCALC[k])
 
     # Artifício para a barra V-Teta não interfir no teste de convergência
-    for k in range(0,d.nb):
+    for k in range(d.nb):
         if d.tipo_barras[k] == 2: 
             DP[k] = FuzzyMath(np.array([0,0,0]))
 
@@ -178,10 +198,10 @@ while (iter < maxiter):
         diffP[k] = DPant[k] - DP[k]
 
     log.write_log(">>> diff DP ")
-    for i in range(0,6):
+    for i in range(d.nb):
         log.write_log(str(diffP[i].f))
     log.write_log(">>> teste conv DP ")
-    for i in range(0,6):
+    for i in range(d.nb):
         log.write_log(str(((DP[i].f[2]-DP[i].f[0])-(DPant[i].f[2]-DPant[i].f[0]))/2))
     ################################################
 
@@ -190,7 +210,9 @@ while (iter < maxiter):
     mod_dp=[]
     for i in range(d.nb):
         #if d.tipo_barras[k]!= 2:
-        mod_dp.append(((DP[i].f[2]-DP[i].f[0])-(DPant[i].f[2]-DPant[i].f[0]))/2)
+        #mod_dp.append(((DP[i].f[2]-DP[i].f[0])-(DPant[i].f[2]-DPant[i].f[0]))/2)
+        mod_dp.append((DP[i].f[1]-DPant[i].f[1]))
+        #mod_dp.append(DP[i].f[1])
         
     if np.amax(np.absolute(mod_dp)) <= errP: # Teste de convergência subproblema P-Teta 
         Kp = 0
@@ -232,11 +254,13 @@ while (iter < maxiter):
         log.write_log(">>> DX  >>> P >>> delta theta")
         log.write_log(str(dx))
         log.write_log_space() 
-        
+        if iter ==5:
+            print('iteração {0} '.format(iter))
+
         #atualizar os angulos
         for k in range(0,d.nb):
             ab[k].f[0] = ab[k].f[0] + som[k] #dx[k]
-            ab[k].f[1] = ab[k].f[1] + mom[k] #dx[k]
+            ab[k].f[1] = ab[k].f[1] + mom[k]
             ab[k].f[2] = ab[k].f[2] + lom[k] #dx[k]
             #d.e[k] =d.e[k]+ dx[k]
         #--
@@ -266,12 +290,13 @@ while (iter < maxiter):
         k = k-1 #correção da dimensao para python
         m = m-1 #correção da dimensao para python
         dt = ab[k] - ab[m]
+        dtm = ab[m] - ab[k]
         DQ[k] = DQ[k] - (vb[k]*vb[m])*(dt.sen()*float(G[k,m])-dt.cos()*float(B[k,m]))
-        DQ[m] = DQ[m] - (vb[m]*vb[k])*((dt*(-1)).sen()*float(G[m,k])-(dt*(-1)).cos()*float(B[m,k]))
+        DQ[m] = DQ[m] - (vb[m]*vb[k])*(dtm.sen()*float(G[m,k])-dtm.cos()*float(B[m,k]))
 
 
     log.write_log(">>> DQ ")
-    for i in range(0,6):
+    for i in range(d.nb):
         log.write_log(str(DQ[i].f))
 
     #calcula DQ
@@ -287,7 +312,9 @@ while (iter < maxiter):
     mod_dq=[]
     for i in range(0, d.nb):
         #if d.tipo_barras[k]==0:
-        mod_dq.append(((DQ[i].f[2]-DQ[i].f[0])-(DQant[i].f[2]-DQant[i].f[0]))/2)
+        #mod_dq.append(((DQ[i].f[2]-DQ[i].f[0])-(DQant[i].f[2]-DQant[i].f[0]))/2)
+        mod_dq.append((DQ[i].f[1]-DQant[i].f[1]))
+        #mod_dq.append(DQ[i].f[1])
 
     if np.amax(np.absolute(mod_dq)) <= errQ: # Teste de convergência subproblema Q-V 
         Kq = 0
@@ -346,12 +373,13 @@ while (iter < maxiter):
     DQant = DQ
 
 log.write_log_space()
-log.write_log(">>> Ângulos")
-log.write_log(str(FuzzyMath.convToArray(ab)*180/np.pi))
+log.write_log(">>> Ângulos em graus")
+#log.write_log(str(FuzzyMath.convToArray(ab)*180/np.pi))
+log.write_log(str(np.round(FuzzyMath.convToArray(ab)*180/np.pi,5)))
 log.write_log_space()
 
 log.write_log(">>> Módulo de Tensão")
-log.write_log(str(FuzzyMath.convToArray(vb)))
+log.write_log(str(np.round(FuzzyMath.convToArray(vb),5)))
 
 #fechando arquivo de log
 log.close_file()

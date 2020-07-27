@@ -69,8 +69,8 @@ class FuzzyMath:
             mA = mX*mY
             aOrd =np.sort([np.absolute(mA - ((mX - aX )*(mY - aY))),np.absolute(mA - ((mX - aX )*(mY + aY ))),np.absolute(mA - ((mX + aX )*(mY - aY ))),np.absolute(mA - ((mX + aX )*(mY + aY )))])
             s.f[1] = mA
-            s.f[0] = mA - aOrd[1]/2
-            s.f[2] = mA + aOrd[1]/2
+            s.f[0] = mA - aOrd[1]
+            s.f[2] = mA + aOrd[1]
             s.pertf = self.pertf * p.pertf
         return s
 
@@ -95,8 +95,8 @@ class FuzzyMath:
         mcos   =  (np.cos(m - a) + np.cos(m + a)) / 2
         acos   = (np.absolute((np.absolute(mcos)-np.absolute(np.cos(m - a)))) + np.absolute((np.absolute(mcos) + np.absolute(np.cos(m + a)))))/2
         s.f[1] = mcos
-        s.f[0] = mcos - acos/2
-        s.f[2] = mcos + acos/2
+        s.f[0] = mcos - acos
+        s.f[2] = mcos + acos
         #s.pertf = self.pertf * p.pertf
         return s
 
@@ -107,8 +107,8 @@ class FuzzyMath:
         msin   =  (np.sin(m - a) + np.sin(m + a)) / 2
         asin   = (np.absolute((np.absolute(msin)-np.absolute(np.sin(m - a)))) + np.absolute((np.absolute(msin) + np.absolute(np.sin(m + a)))))/2
         s.f[1] = msin
-        s.f[0] = msin - asin/2
-        s.f[2] = msin + asin/2
+        s.f[0] = msin - asin
+        s.f[2] = msin + asin
         #s.pertf = self.pertf * p.pertf
         return s
     

@@ -116,3 +116,29 @@ class DadosEntrada:
             tri2 = FuzzyMath(np.array([self.barras_fuzzy[k,10],self.barras_fuzzy[k,11],self.barras_fuzzy[k,12]])) #PL
             self.qliq.append((tri1-tri2)*(1/self.sbase))
         return None
+    
+    def calc_disp(self,B1L,B2L):
+        '''Função que calcula a dispersão de V e ang baseado na dispersão das potencias'''
+        DP=np.zeros((self.nb,3))
+        DQ=np.zeros((self.nb,3))
+        for k in  range(self.nb):
+            DP[k,:]=np.array([self.pliq[k].f])
+            c = DP[k,1]
+            DP[k,0] = DP[k,0] - c
+            DP[k,1] = DP[k,1] - c
+            DP[k,2] = DP[k,2] - c
+            DQ[k,:]=np.array([self.qliq[k].f])
+            c = DQ[k,1]
+            DQ[k,0] = DQ[k,0] - c
+            DQ[k,1] = DQ[k,1] - c
+            DQ[k,2] = DQ[k,2] - c
+        dv = np.matmul(B1L,DP)
+        dang = np.matmul(B2L,DQ)
+        for k in range(self.nb):
+            self.vb[k,0] = self.vb[k,0] + dv[k,0]
+            self.vb[k,1] = self.vb[k,1] + dv[k,1]
+            self.vb[k,2] = self.vb[k,2] + dv[k,2]
+            self.ab[k,0] = self.ab[k,0] + dang[k,0]
+            self.ab[k,1] = self.ab[k,1] + dang[k,1]
+            self.ab[k,2] = self.ab[k,2] + dang[k,2]
+        return None

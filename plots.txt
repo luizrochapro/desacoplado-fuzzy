@@ -1,0 +1,29 @@
+plt.plot(f.uni_dis_F, dp, 'b', linewidth=1.5)
+plt.show()
+
+plt.plot(f.uni_dis_F, act_mfs[0], linewidth=1.5)
+plt.plot(f.uni_dis_F, act_mfs[1], linewidth=1.5)
+plt.plot(f.uni_dis_F, act_mfs[2], linewidth=1.5)
+plt.plot(f.uni_dis_F, act_mfs[3], linewidth=1.5)
+plt.plot(f.uni_dis_F, act_mfs[4], linewidth=1.5)
+plt.plot(f.uni_dis_F, act_mfs[5], linewidth=1.5)
+plt.plot(f.uni_dis_F, act_mfs[6], linewidth=1.5)
+plt.show()
+
+
+plt.plot(f.uni_dis_X, mfs_saida[0], linewidth=1.5)
+plt.plot(f.uni_dis_X, mfs_saida[1], linewidth=1.5)
+plt.plot(f.uni_dis_X, mfs_saida[2], linewidth=1.5)
+plt.plot(f.uni_dis_X, mfs_saida[3], linewidth=1.5)
+plt.plot(f.uni_dis_X, mfs_saida[4], linewidth=1.5)
+plt.plot(f.uni_dis_X, mfs_saida[5], linewidth=1.5)
+plt.plot(f.uni_dis_X, mfs_saida[6], linewidth=1.5)
+plt.show()
+
+plt.plot(f.uni_dis_X, mfs_agregadas, 'b', linewidth=1.5)
+plt.show()
+
+
+
+plt.plot(f.uni_dis_F, dq, 'b', linewidth=1.5)
+plt.show()

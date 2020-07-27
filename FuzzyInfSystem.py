@@ -32,7 +32,9 @@ class FuzzyInfSystem:
         ln = fuzz.trimf(self.uni_dis_F, [-self.dFmax, -self.dFmax, -self.dFmax/3])
         mn = fuzz.trimf(self.uni_dis_F, [-self.dFmax, -self.dFmax/2, 0])
         sn = fuzz.trimf(self.uni_dis_F, [-self.dFmax/3, -self.dFmax/6, 0])
+        #ssn = fuzz.trimf(self.uni_dis_F, [-self.dFmax/6, -self.dFmax/12, 0]) #acrescentei
         zr = fuzz.trimf(self.uni_dis_F, [-self.dFmax/12, 0, self.dFmax/12])
+        #ssp = fuzz.trimf(self.uni_dis_F, [0, self.dFmax/12, self.dFmax/6]) #acrescentei
         sp = fuzz.trimf(self.uni_dis_F, [0, self.dFmax/6, self.dFmax/3])
         mp = fuzz.trimf(self.uni_dis_F, [0, self.dFmax/2, self.dFmax])
         lp = fuzz.trimf(self.uni_dis_F, [self.dFmax/3, self.dFmax, self.dFmax])
@@ -44,7 +46,9 @@ class FuzzyInfSystem:
         ln = fuzz.trimf(self.uni_dis_X, [-self.dXmax, -self.dXmax, -self.dXmax/3])
         mn = fuzz.trimf(self.uni_dis_X, [-self.dXmax, -self.dXmax/2, 0])
         sn = fuzz.trimf(self.uni_dis_X, [-self.dXmax/3, -self.dXmax/6, 0])
+        #ssn = fuzz.trimf(self.uni_dis_X, [-self.dXmax/6, -self.dXmax/12, 0]) #acrescentei
         zr = fuzz.trimf(self.uni_dis_X, [-self.dXmax/12, 0, self.dXmax/12])
+        #ssp = fuzz.trimf(self.uni_dis_X, [0, self.dXmax/12, self.dXmax/6]) #acrescentei
         sp = fuzz.trimf(self.uni_dis_X, [0, self.dXmax/6, self.dXmax/3])
         mp = fuzz.trimf(self.uni_dis_X, [0, self.dXmax/2, self.dXmax])
         lp = fuzz.trimf(self.uni_dis_X, [self.dXmax/3, self.dXmax, self.dXmax])
