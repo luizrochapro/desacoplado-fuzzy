@@ -18,10 +18,12 @@ log.open_file()
 
 #Dados de entrada
 #filein = 'sis6.dat'
+#filein = 'sis2.dat'
 #filein = 'sis6_varang.dat'
 #filein = 'sis6_vbcte.dat'
+#filein = 'sis3_1.dat'
 filein = 'sis3_2.dat'
-
+#filein = 'sis6_2.dat'
 
 # Instancia objeto dados
 d = DadosEntrada('entradas/{0}'.format(filein))
@@ -44,7 +46,7 @@ bsh_k = d.barras[:,12]/d.sbase
 ### Cálculo das condutâncias e susceptâncias primitivas de ramos
 gkm = 100 * d.ramos[:,2] / (np.square(d.ramos[:,2]) + np.square(d.ramos[:,3]))
 bkm = -100 * d.ramos[:,3] / (np.square(d.ramos[:,2]) + np.square(d.ramos[:,3]))
-xkm = d.ramos[:,3] / 100  # usado na formação da B' do desacoplado XB
+xkm = d.ramos[:,3] # usado na formação da B' do desacoplado XB
 bsh_km = d.ramos[:,4] / (2 * d.sbase) #Susceptância shunt de ramo
 akm = d.ramos[:,5] #Tap dos transformadores defasadores (se LT, tap deve ser 1,0)
 
@@ -123,11 +125,17 @@ DPant = []
 DQant = []
 diffP = []
 
-errP = 1e-5
-errQ = 1e-5
+errP = 1e-3
+errQ = 1e-3
 presF = 0.01
-presX = 0.00001
+presX = 0.0000001
 maxiter = 1000
+dpPrint = []
+dqPrint = []
+mod_dp_diff = []
+mod_dq_diff = []
+dpPrintDiff = []
+dqPrintDiff = []
 
 for k in range(d.nb):
     DPant.append(FuzzyMath([0,0,0]))
@@ -210,10 +218,11 @@ while (iter < maxiter):
     mod_dp=[]
     for i in range(d.nb):
         #if d.tipo_barras[k]!= 2:
-        #mod_dp.append(((DP[i].f[2]-DP[i].f[0])-(DPant[i].f[2]-DPant[i].f[0]))/2)
+        mod_dp_diff.append(((DP[i].f[2]-DP[i].f[0])-(DPant[i].f[2]-DPant[i].f[0]))/2)
         mod_dp.append((DP[i].f[1]-DPant[i].f[1]))
         #mod_dp.append(DP[i].f[1])
-        
+    dpPrint.append(np.amax(np.absolute(mod_dp))) 
+    dpPrintDiff.append(np.amax(np.absolute(mod_dp_diff)))   
     if np.amax(np.absolute(mod_dp)) <= errP: # Teste de convergência subproblema P-Teta 
         Kp = 0
         if Kq == 0:
@@ -232,7 +241,7 @@ while (iter < maxiter):
         #vbA = FuzzyMath.convToArray(vb)
         #abA = FuzzyMath.convToArray(ab)
 
-        ud = UniversoDiscurso(DP, G, B, vb, ab, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
+        ud = UniversoDiscurso(DP, G, B, vb, ab, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras,'ativo')
         dfmax,dxmax = ud.calc_dfmax_dxmax()       
         print(">>  dfmax={0} >>> dxmax={1}".format(dfmax,dxmax)) 
         f = FuzzyInfSystem(dfmax,dxmax,presF,presX)
@@ -244,7 +253,7 @@ while (iter < maxiter):
                 act_mfs = f.activate_mfs(dp, x)
                 mfs_saida = f.calc_mfs_saida(act_mfs, y)
                 mfs_agregadas = f.agregar_mfs_saida(mfs_saida)
-                dx.append(f.calc_centroide(mfs_agregadas))
+                #dx.append(f.calc_centroide(mfs_agregadas))
                 som[k]=fuzz.defuzzify.defuzz(f.uni_dis_X,mfs_agregadas,'som')
                 mom[k]=fuzz.defuzzify.defuzz(f.uni_dis_X,mfs_agregadas,'mom')
                 lom[k]=fuzz.defuzzify.defuzz(f.uni_dis_X,mfs_agregadas,'lom')
@@ -254,13 +263,13 @@ while (iter < maxiter):
         log.write_log(">>> DX  >>> P >>> delta theta")
         log.write_log(str(dx))
         log.write_log_space() 
-        if iter ==5:
+        if iter == 10.5:
             print('iteração {0} '.format(iter))
 
         #atualizar os angulos
         for k in range(0,d.nb):
             ab[k].f[0] = ab[k].f[0] + som[k] #dx[k]
-            ab[k].f[1] = ab[k].f[1] + mom[k]
+            ab[k].f[1] = ab[k].f[1] + mom[k]  #mom[k]
             ab[k].f[2] = ab[k].f[2] + lom[k] #dx[k]
             #d.e[k] =d.e[k]+ dx[k]
         #--
@@ -312,10 +321,11 @@ while (iter < maxiter):
     mod_dq=[]
     for i in range(0, d.nb):
         #if d.tipo_barras[k]==0:
-        #mod_dq.append(((DQ[i].f[2]-DQ[i].f[0])-(DQant[i].f[2]-DQant[i].f[0]))/2)
+        mod_dq_diff.append(((DQ[i].f[2]-DQ[i].f[0])-(DQant[i].f[2]-DQant[i].f[0]))/2)
         mod_dq.append((DQ[i].f[1]-DQant[i].f[1]))
         #mod_dq.append(DQ[i].f[1])
-
+    dqPrint.append(np.amax(np.absolute(mod_dq)))
+    dqPrintDiff.append(np.amax(np.absolute(mod_dq_diff)))
     if np.amax(np.absolute(mod_dq)) <= errQ: # Teste de convergência subproblema Q-V 
         Kq = 0
         if Kp == 0:
@@ -333,7 +343,7 @@ while (iter < maxiter):
         #vbA = FuzzyMath.convToArray(vb)
         #abA = FuzzyMath.convToArray(ab)
 
-        ud = UniversoDiscurso(DQ, G, B, vb, ab, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras)
+        ud = UniversoDiscurso(DQ, G, B, vb, ab, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras,'reativo')
         dfmax,dxmax = ud.calc_dfmax_dxmax()        
         print(">>  dfmax={0} >>> dxmax={1}".format(dfmax,dxmax)) 
         f = FuzzyInfSystem(dfmax,dxmax,presF,presX)
@@ -341,11 +351,11 @@ while (iter < maxiter):
         y = f.pert_funcs_dx()
         for k in range(0,d.nb):
             if np.sum(DQ[k].f) != 0:
-                dq = fuzz.trimf(f.uni_dis_F, np.sort(np.round(np.array(DQ[k].f),2)))
+                dq = fuzz.trimf(f.uni_dis_F, np.sort(np.round(np.array(DQ[k].f),1)))
                 act_mfs = f.activate_mfs(dq, x)
                 mfs_saida = f.calc_mfs_saida(act_mfs, y)
                 mfs_agregadas = f.agregar_mfs_saida(mfs_saida)
-                dx.append(f.calc_centroide(mfs_agregadas))
+                #dx.append(f.calc_centroide(mfs_agregadas))
                 som[k]=fuzz.defuzzify.defuzz(f.uni_dis_X,mfs_agregadas,'som')
                 mom[k]=fuzz.defuzzify.defuzz(f.uni_dis_X,mfs_agregadas,'mom')
                 lom[k]=fuzz.defuzzify.defuzz(f.uni_dis_X,mfs_agregadas,'lom')
@@ -356,7 +366,7 @@ while (iter < maxiter):
         for k in range(0,d.nb):
             vb[k].f[0] = vb[k].f[0] + som[k] #dx[k]
             vb[k].f[1] = vb[k].f[1] + mom[k] #dx[k]
-            vb[k].f[2] = vb[k].f[2] + lom[k] #dx[k]
+            vb[k].f[2] = vb[k].f[2] + lom[k] #lom[k] #dx[k]
 
             #d.f[k] =d.f[k]+ dx[k]
         #--             
@@ -384,6 +394,25 @@ log.write_log(str(np.round(FuzzyMath.convToArray(vb),5)))
 #fechando arquivo de log
 log.close_file()
 
+x = np.arange(len(dpPrint))
+plt.plot(x, dpPrint, 'b', linewidth=1.5)
+plt.title('DP - DPAnt')
+plt.show()
+
+y = np.arange(len(dqPrint))
+plt.plot(y, dqPrint, 'b', linewidth=1.5)
+plt.title('DQ - DQAnt')
+plt.show()
+
+x = np.arange(len(dpPrintDiff))
+plt.plot(x, dpPrintDiff, 'b', linewidth=1.5)
+plt.title('base - base anterior /2 de DP')
+plt.show()
+
+y = np.arange(len(dqPrintDiff))
+plt.plot(y, dqPrintDiff, 'b', linewidth=1.5)
+plt.title('base - base anterior /2 de DQ')
+plt.show()
 # ===================== CÁLCULO DO SUBSISTEMA 2 ===========================
 # OBS: Pliq de barras PV e PQ, e Qliq de barras PQ, são dados do problema
 # mas sãoo aqui recalculados para se certificar que os resultados obtidos na

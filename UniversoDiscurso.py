@@ -6,8 +6,11 @@ from FuzzyMath import *
 
 class UniversoDiscurso:
 
-    def __init__(self,DF,G,B,vb,ab,nb,nr,bini,bfim,tb):
-        self.DP = DF
+    def __init__(self,DF,G,B,vb,ab,nb,nr,bini,bfim,tb,ar):
+        if ar == 'ativo':
+            self.DP = DF
+        elif ar=='reativo':
+            self.DQ = DF
         self.G = G
         self.B = B
         self.vb = vb
@@ -17,7 +20,7 @@ class UniversoDiscurso:
         self.bini = bini
         self.bfim = bfim
         self.tb = tb
-        #self.DP = np.zeros((self.nb,3))
+        self.ar = ar
     
     def calc_dfmax_dxmax(self):
         '''Função que calcula os novos universos de discurso'''
@@ -39,12 +42,13 @@ class UniversoDiscurso:
             k = k-1 #correção da dimensao para python
             m = m-1 #correção da dimensao para python
             dt = self.ab[k] - self.ab[m]
+            dtm = self.ab[m] - self.ab[k]
             H[k] = H[k] - self.vb[k]*self.vb[m]*(dt.sen()*float(self.G[k,m])-dt.cos()*float(self.B[k,m]))    
-        '''
+            H[m] = H[m] - self.vb[k]*self.vb[m]*(dtm.sen()*float(self.G[k,m])-dtm.cos()*float(self.B[k,m]))
         # o cálculo do L depende do tipo de barra
-        for k in range(0,self.nb):
+        for k in range(self.nb):
             #if self.tb[k] != 2:
-            L[k,t] = -1* self.B[k,k] * self.vb[k,t]
+            L[k] = self.vb[k] * (-1) * float(self.B[k,k])
         
         for r in range(0,self.nr):
             #if self.tb[k] != 2:
@@ -53,17 +57,34 @@ class UniversoDiscurso:
             k = k-1 #correção da dimensao para python
             m = m-1 #correção da dimensao para python
             dt = self.ab[k] - self.ab[m]
-            L[k,t] = L[k,t] + self.vb[m,t]*(self.G[k,m]*np.sin(dt[t])-self.B[k,m]*np.cos(dt[t]))   
-        '''
+            dtm = self.ab[m] - self.ab[k]
+            L[k] = L[k] + self.vb[m]*(dt.sen()*float(self.G[k,m])-dt.cos()*float(self.B[k,m]))
+            L[m] = L[m] + self.vb[m]*(dtm.sen()*float(self.G[k,m])-dtm.cos()*float(self.B[k,m]))   
+        
+        
         DF =[]
-        for k in range(self.nb):
-            DF.append([self.DP[k].f[0], self.DP[k].f[1], self.DP[k].f[2]])
+        Mat = []
+        if self.ar == 'ativo':            
+            for k in range(self.nb):
+                DF.append([self.DP[k].f[0], self.DP[k].f[1], self.DP[k].f[2]])
+                Mat.append(H[k])
+            for k in range(self.nb):
+                if self.tb[k] == 2:                
+                    Mat[k] = FuzzyMath([0,0,0])
 
-        '''
+        elif self.ar == 'reativo':
+            for k in range(self.nb):
+                DF.append([self.DQ[k].f[0], self.DQ[k].f[1], self.DQ[k].f[2]])
+                Mat.append(L[k])
+            for k in range(self.nb):
+                if self.tb[k] != 0:                
+                    Mat[k] = FuzzyMath([0,0,0])
+        
+        
         aux = np.absolute(DF[:])
         ind  = np.unravel_index(np.argmax(aux, axis=None), aux.shape)
         dFmax = aux[ind]
-        aux = np.absolute(H[ind[0]].f[ind[1]])
+        aux = np.absolute(Mat[ind[0]].f[ind[1]])
         dXmax = (1/(aux))*dFmax
         '''
         aux = []
@@ -72,7 +93,7 @@ class UniversoDiscurso:
 
         ind  = np.argmax(aux)
         dFmax = aux[ind]
-        aux = np.absolute(H[ind].f[1])
+        aux = np.absolute(Mat[ind].f[1])
         dXmax = (1/(aux))*dFmax
-        
+        '''
         return dFmax, dXmax

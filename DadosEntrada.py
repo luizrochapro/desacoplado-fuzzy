@@ -132,8 +132,8 @@ class DadosEntrada:
             DQ[k,0] = DQ[k,0] - c
             DQ[k,1] = DQ[k,1] - c
             DQ[k,2] = DQ[k,2] - c
-        dv = np.matmul(B1L,DP)
-        dang = np.matmul(B2L,DQ)
+        dang = np.matmul(B1L,DP)
+        dv = np.matmul(B2L,DQ)
         for k in range(self.nb):
             self.vb[k,0] = self.vb[k,0] + dv[k,0]
             self.vb[k,1] = self.vb[k,1] + dv[k,1]
