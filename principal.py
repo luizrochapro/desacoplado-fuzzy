@@ -20,9 +20,9 @@ log.open_file()
 #filein = 'sis6.dat'
 #filein = 'sis2.dat'
 #filein = 'sis6_varang.dat'
-#filein = 'sis6_vbcte.dat'
+filein = 'sis6_vbcte.dat'
 #filein = 'sis3_1.dat'
-filein = 'sis3_2.dat'
+#filein = 'sis3_2.dat'
 #filein = 'sis6_2.dat'
 
 # Instancia objeto dados
@@ -105,7 +105,7 @@ B1L = np.linalg.inv(B1L)
 B2L = np.linalg.inv(B2L)
 
 #calcular dispersão do módulo da tensão e ângulo
-d.calc_disp(B1L,B2L)
+#d.calc_disp(B1L,B2L)
 
 #Converter em valores fuzzy
 vb, ab = [], []
@@ -125,8 +125,8 @@ DPant = []
 DQant = []
 diffP = []
 
-errP = 1e-4
-errQ = 1e-4
+errP = 1e-3
+errQ = 1e-3
 presF = 0.01
 presX = 0.0000001
 maxiter = 1000
@@ -219,10 +219,12 @@ while (iter < maxiter):
     for i in range(d.nb):
         #if d.tipo_barras[k]!= 2:
         mod_dp_diff.append(((DP[i].f[2]-DP[i].f[0])-(DPant[i].f[2]-DPant[i].f[0]))/2)
+        #mod_dp.append(((DP[i].f[2]-DP[i].f[0])-(DPant[i].f[2]-DPant[i].f[0]))/2)
         mod_dp.append((DP[i].f[1]-DPant[i].f[1]))
         #mod_dp.append(DP[i].f[1])
     dpPrint.append(np.amax(np.absolute(mod_dp))) 
     dpPrintDiff.append(np.amax(np.absolute(mod_dp_diff)))   
+    print('dp max = {0}'.format(np.amax(np.absolute(mod_dp))))
     if np.amax(np.absolute(mod_dp)) <= errP: # Teste de convergência subproblema P-Teta 
         Kp = 0
         if Kq == 0:
@@ -322,10 +324,12 @@ while (iter < maxiter):
     for i in range(0, d.nb):
         #if d.tipo_barras[k]==0:
         mod_dq_diff.append(((DQ[i].f[2]-DQ[i].f[0])-(DQant[i].f[2]-DQant[i].f[0]))/2)
+        #mod_dq.append(((DQ[i].f[2]-DQ[i].f[0])-(DQant[i].f[2]-DQant[i].f[0]))/2)
         mod_dq.append((DQ[i].f[1]-DQant[i].f[1]))
         #mod_dq.append(DQ[i].f[1])
     dqPrint.append(np.amax(np.absolute(mod_dq)))
     dqPrintDiff.append(np.amax(np.absolute(mod_dq_diff)))
+    print('dq max = {0}'.format(np.amax(np.absolute(mod_dq))))
     if np.amax(np.absolute(mod_dq)) <= errQ: # Teste de convergência subproblema Q-V 
         Kq = 0
         if Kp == 0:

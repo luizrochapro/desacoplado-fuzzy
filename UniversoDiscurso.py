@@ -7,10 +7,16 @@ from FuzzyMath import *
 class UniversoDiscurso:
 
     def __init__(self,DF,G,B,vb,ab,nb,nr,bini,bfim,tb,ar):
+        '''
         if ar == 'ativo':
             self.DP = DF
         elif ar=='reativo':
             self.DQ = DF
+        '''    
+        if ar == 'ativo' or ar == 'reativo':
+            self.DP = DF
+            self.DQ = DF
+
         self.G = G
         self.B = B
         self.vb = vb
@@ -64,6 +70,7 @@ class UniversoDiscurso:
         
         DF =[]
         Mat = []
+        '''
         if self.ar == 'ativo':            
             for k in range(self.nb):
                 DF.append([self.DP[k].f[0], self.DP[k].f[1], self.DP[k].f[2]])
@@ -79,8 +86,15 @@ class UniversoDiscurso:
             for k in range(self.nb):
                 if self.tb[k] != 0:                
                     Mat[k] = FuzzyMath([0,0,0])
-        
-        
+        '''
+        if self.ar == 'ativo' or self.ar=='reativo':            
+            for k in range(self.nb):
+                DF.append([self.DP[k].f[0], self.DP[k].f[1], self.DP[k].f[2]])
+                Mat.append(H[k])
+            for k in range(self.nb):
+                if self.tb[k] == 2:                
+                    Mat[k] = FuzzyMath([0,0,0])
+        '''
         aux = np.absolute(DF[:])
         ind  = np.unravel_index(np.argmax(aux, axis=None), aux.shape)
         dFmax = aux[ind]
@@ -95,5 +109,5 @@ class UniversoDiscurso:
         dFmax = aux[ind]
         aux = np.absolute(Mat[ind].f[1])
         dXmax = (1/(aux))*dFmax
-        '''
+        
         return dFmax, dXmax
