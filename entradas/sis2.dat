@@ -17,9 +17,9 @@ Ramos
 %
 Barras_Fuzzy
 % barras fuzzy com cargas e geração
-%  PG  PG    PG   QG    QG    QG  PC   PC   PC   QC    QC   QC
-1  0    0    0    0      0    0      0    0    0    0      0    0 
-2  0    0    0    6.65  7.0  7.35  28.5  30  31.5    0      0    0 
+%  PG  PG    PG   QG    QG    QG    PC   PC   PC       QC    QC   QC
+1  0    0    0    0      0    0      0    0    0       0      0    0 
+2  0    0    0    6.65  7.0  7.35     28.5  30   31.5  0      0    0
 99999
 %
 Universo_Discurso

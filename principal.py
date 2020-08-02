@@ -18,12 +18,12 @@ log.open_file()
 
 #Dados de entrada
 #filein = 'sis6.dat'
-#filein = 'sis2.dat'
 #filein = 'sis6_varang.dat'
-filein = 'sis6_vbcte.dat'
 #filein = 'sis3_1.dat'
-#filein = 'sis3_2.dat'
 #filein = 'sis6_2.dat'
+#filein = 'sis2.dat'
+#filein = 'sis3_2.dat'
+filein = 'sis6_vbcte.dat'
 
 # Instancia objeto dados
 d = DadosEntrada('entradas/{0}'.format(filein))
@@ -105,7 +105,7 @@ B1L = np.linalg.inv(B1L)
 B2L = np.linalg.inv(B2L)
 
 #calcular dispersão do módulo da tensão e ângulo
-#d.calc_disp(B1L,B2L)
+d.calc_disp(B1L,B2L)
 
 #Converter em valores fuzzy
 vb, ab = [], []
@@ -125,8 +125,10 @@ DPant = []
 DQant = []
 diffP = []
 
-errP = 1e-3
-errQ = 1e-3
+errP = 1e-4
+errQ = 1e-4
+#errP = 0.003
+#errQ = 0.003
 presF = 0.01
 presX = 0.0000001
 maxiter = 1000
