@@ -46,7 +46,7 @@ bsh_k = d.barras[:,12]/d.sbase
 ### Cálculo das condutâncias e susceptâncias primitivas de ramos
 gkm = 100 * d.ramos[:,2] / (np.square(d.ramos[:,2]) + np.square(d.ramos[:,3]))
 bkm = -100 * d.ramos[:,3] / (np.square(d.ramos[:,2]) + np.square(d.ramos[:,3]))
-xkm = d.ramos[:,3] # usado na formação da B' do desacoplado XB
+xkm = d.ramos[:,3]/100 # usado na formação da B' do desacoplado XB
 bsh_km = d.ramos[:,4] / (2 * d.sbase) #Susceptância shunt de ramo
 akm = d.ramos[:,5] #Tap dos transformadores defasadores (se LT, tap deve ser 1,0)
 
@@ -125,8 +125,8 @@ DPant = []
 DQant = []
 diffP = []
 
-errP = 1e-3
-errQ = 1e-3
+errP = 1e-4
+errQ = 1e-4
 presF = 0.01
 presX = 0.0000001
 maxiter = 1000
