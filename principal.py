@@ -21,9 +21,12 @@ log.open_file()
 #filein = 'sis6_varang.dat'
 #filein = 'sis3_1.dat'
 #filein = 'sis6_2.dat'
+#
 #filein = 'sis2.dat'
-#filein = 'sis3_2.dat'
-filein = 'sis6_vbcte.dat'
+#filein = 'sis3_2.dat' #fator = 1
+#filein = 'sis6_vbcte.dat' #fator = 4.92 
+#filein = 'sis13.dat'
+filein = 'sis14.dat'  #fator = 3.22 ou 3.24
 
 # Instancia objeto dados
 d = DadosEntrada('entradas/{0}'.format(filein))
@@ -40,7 +43,7 @@ d.calc_qliq()
 #log.write_log(d.qliq)
 
 # normalização em pu dos dados de shunt
-bsh_k = d.barras[:,12]/d.sbase
+bsh_k = d.barras[:,14]/d.sbase
 
 # normalização em pu dos dados de ramos
 ### Cálculo das condutâncias e susceptâncias primitivas de ramos
@@ -124,6 +127,10 @@ Kq = 1
 DPant = []
 DQant = []
 diffP = []
+DPAcum =[]
+DXPAcum = []
+DQAcum = []
+DXQAcum = []
 
 errP = 1e-4
 errQ = 1e-4
@@ -131,7 +138,7 @@ errQ = 1e-4
 #errQ = 0.003
 presF = 0.01
 presX = 0.0000001
-maxiter = 1000
+maxiter = 1500
 dpPrint = []
 dqPrint = []
 mod_dp_diff = []
@@ -161,10 +168,12 @@ while (iter < maxiter):
     log.write_log_space()
     
     DP = []
+    DP2 = []
     PCALC = []
     
     for k in range(0,d.nb):
-            DP.append(d.pliq[k] - ((vb[k]**2) * float(G[k,k])))
+        DP.append(d.pliq[k] - ((vb[k]**2) * float(G[k,k])))
+        PCALC.append((vb[k]**2) * (-1) * float(G[k,k]))
 
     for r in range(0,d.nr):
         k = d.bini[r] 
@@ -174,7 +183,16 @@ while (iter < maxiter):
         dt = ab[k] - ab[m]
         dtm = ab[m] - ab[k]
         DP[k] = DP[k] - (dt.cos()*float(G[k,m]) + dt.sen()*float(B[k,m])) * (vb[k]) * (vb[m])
-        DP[m] = DP[m] - (dtm.cos()*float(G[m,k])+ dtm.sen()*float(B[m,k]))* (vb[m]) * (vb[k])
+        DP[m] = DP[m] - (dtm.cos()*float(G[m,k])+ dtm.sen()*float(B[m,k])) * (vb[m]) * (vb[k])
+
+        PCALC[k] = PCALC[k] - (dt.cos()*float(G[k,m]) + dt.sen()*float(B[k,m])) * (vb[k]) * (vb[m])
+        PCALC[m] = PCALC[m] - (dtm.cos()*float(G[m,k])+ dtm.sen()*float(B[m,k])) * (vb[m]) * (vb[k])
+
+    for k in range(d.nb):
+        DP2.append(d.pliq[k]-PCALC[k])
+
+    #for i in range(d.nb):
+    #    DP.append(d.pliq[i]-PCALC[i])
 
     '''
     for i in range(d.nb):
@@ -242,13 +260,14 @@ while (iter < maxiter):
         
         dx = []
         som, mom, lom = np.zeros((d.nb,1)), np.zeros((d.nb,1)), np.zeros((d.nb,1))
+        aux = np.zeros((d.nb,1))
         #vbA = FuzzyMath.convToArray(vb)
         #abA = FuzzyMath.convToArray(ab)
 
-        ud = UniversoDiscurso(DP, G, B, vb, ab, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras,'ativo')
-        dfmax,dxmax = ud.calc_dfmax_dxmax()       
+        ud = UniversoDiscurso(DP, G, B, vb, ab, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras,'ativo', iter)
+        dfmax, dxmax = ud.calc_dfmax_dxmax()       
         print(">>  dfmax={0} >>> dxmax={1}".format(dfmax,dxmax)) 
-        f = FuzzyInfSystem(dfmax,dxmax,presF,presX)
+        f = FuzzyInfSystem(dfmax, dxmax, presF, presX)
         x = f.pert_funcs_df()
         y = f.pert_funcs_dx()
         for k in range(0,d.nb):
@@ -263,11 +282,17 @@ while (iter < maxiter):
                 lom[k]=fuzz.defuzzify.defuzz(f.uni_dis_X,mfs_agregadas,'lom')
             else:
                 dx.append(0)
+                som[k]=0
+                mom[k]=0
+                lom[k]=0
+            aux[k] = DP[k].f[1]
+        DPAcum.append(np.amax(np.absolute(aux)))
+        DXPAcum.append(np.amax(np.absolute(mom)))
         log.write_log_space()                
         log.write_log(">>> DX  >>> P >>> delta theta")
         log.write_log(str(dx))
         log.write_log_space() 
-        if iter == 10.5:
+        if iter == 15:
             print('iteração {0} '.format(iter))
 
         #atualizar os angulos
@@ -346,11 +371,12 @@ while (iter < maxiter):
 
         dx = []
         som, mom, lom = np.zeros((d.nb,1)), np.zeros((d.nb,1)), np.zeros((d.nb,1))
+        aux = np.zeros((d.nb))
         #vbA = FuzzyMath.convToArray(vb)
         #abA = FuzzyMath.convToArray(ab)
 
-        ud = UniversoDiscurso(DQ, G, B, vb, ab, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras,'reativo')
-        dfmax,dxmax = ud.calc_dfmax_dxmax()        
+        ud = UniversoDiscurso(DQ, G, B, vb, ab, d.nb, d.nr, d.bini, d.bfim, d.tipo_barras,'reativo',iter)
+        dfmax, dxmax = ud.calc_dfmax_dxmax()        
         print(">>  dfmax={0} >>> dxmax={1}".format(dfmax,dxmax)) 
         f = FuzzyInfSystem(dfmax,dxmax,presF,presX)
         x = f.pert_funcs_df()
@@ -367,6 +393,12 @@ while (iter < maxiter):
                 lom[k]=fuzz.defuzzify.defuzz(f.uni_dis_X,mfs_agregadas,'lom')
             else:
                 dx.append(0)
+                som[k]=0
+                mom[k]=0
+                lom[k]=0
+            aux[k] = DQ[k].f[1]
+        DQAcum.append(np.amax(np.absolute(aux)))
+        DXQAcum.append(np.amax(np.absolute(mom)))
 
         #atualizar os módulos de tensão
         for k in range(0,d.nb):
@@ -419,6 +451,27 @@ y = np.arange(len(dqPrintDiff))
 plt.plot(y, dqPrintDiff, 'b', linewidth=1.5)
 plt.title('base - base anterior /2 de DQ')
 plt.show()
+
+x = np.arange(len(DPAcum))
+plt.plot(x, DPAcum, 'b', linewidth=1.5)
+plt.title('DP')
+plt.show()
+
+y = np.arange(len(DXPAcum))
+plt.plot(y, DXPAcum, 'b', linewidth=1.5)
+plt.title('mom para DP')
+plt.show()
+
+x = np.arange(len(DQAcum))
+plt.plot(x, DQAcum, 'b', linewidth=1.5)
+plt.title('DQ')
+plt.show()
+
+y = np.arange(len(DXQAcum))
+plt.plot(y, DXQAcum, 'b', linewidth=1.5)
+plt.title('mom para DQ')
+plt.show()
+
 # ===================== CÁLCULO DO SUBSISTEMA 2 ===========================
 # OBS: Pliq de barras PV e PQ, e Qliq de barras PQ, são dados do problema
 # mas sãoo aqui recalculados para se certificar que os resultados obtidos na

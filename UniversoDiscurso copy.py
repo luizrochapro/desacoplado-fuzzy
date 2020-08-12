@@ -41,8 +41,8 @@ class UniversoDiscurso:
             L.append((FuzzyMath([0,0,0])))
 
         # o cálculo do H
-        #for k in range(self.nb):
-        #    H[k] =(self.vb[k]**2) * (-1) * float(self.B[k,k])
+        for k in range(self.nb):
+            H[k] = (self.vb[k]**2) * (-1) * float(self.B[k,k])
         
         for r in range(self.nr):
             k = self.bini[r]
@@ -51,12 +51,12 @@ class UniversoDiscurso:
             m = m-1 #correção da dimensao para python
             dt = self.ab[k] - self.ab[m]
             dtm = self.ab[m] - self.ab[k]
-            H[k] = H[k] + self.vb[k]*self.vb[m]*(dt.cos()*float(self.B[k,m])-dt.sen()*float(self.G[k,m]))    
-            H[m] = H[m] + self.vb[k]*self.vb[m]*(dtm.cos()*float(self.B[k,m])-dtm.sen()*float(self.G[k,m]))
+            H[k] = H[k] - self.vb[k]*self.vb[m]*(dt.sen()*float(self.G[k,m])-dt.cos()*float(self.B[k,m]))    
+            H[m] = H[m] - self.vb[k]*self.vb[m]*(dtm.sen()*float(self.G[k,m])-dtm.cos()*float(self.B[k,m]))
         # o cálculo do L depende do tipo de barra
         for k in range(self.nb):
             #if self.tb[k] != 2:
-            L[k] = self.vb[k] * (-2) * float(self.B[k,k])
+            L[k] = self.vb[k] * (-1) * float(self.B[k,k])
         
         for r in range(0,self.nr):
             #if self.tb[k] != 2:
@@ -72,7 +72,7 @@ class UniversoDiscurso:
         
         DF =[]
         Mat = []
-        
+        '''
         if self.ar == 'ativo':            
             for k in range(self.nb):
                 DF.append([self.DP[k].f[0], self.DP[k].f[1], self.DP[k].f[2]])
@@ -88,7 +88,7 @@ class UniversoDiscurso:
             for k in range(self.nb):
                 if self.tb[k] != 0:                
                     Mat[k] = FuzzyMath([0,0,0])
-        
+        '''
         if self.ar == 'ativo' or self.ar=='reativo':            
             for k in range(self.nb):
                 DF.append([self.DP[k].f[0], self.DP[k].f[1], self.DP[k].f[2]])
@@ -107,20 +107,13 @@ class UniversoDiscurso:
         aux = []
         for k in range(self.nb):
             aux.append(np.absolute(DF[k][1]))
-        
-        if self.ar == 'reativo':
-            print('parar')
 
-        #fator = 6 - (self.iter/10)
-        fator = 1 #4.92 #3.22 #3.2
-        # 6 barras  = 4.92
-        # 14 barras = 3.22
-        #if fator <= 5:
-        #    fator = 5
-        #print('Fator = {0}'.format(fator))
+        #fator = 6 - (self.iter/1000)
+        fator = 1
+        print('Fator = {0}'.format(fator))
         ind  = np.argmax(aux)
         dFmax = fator*aux[ind]
         aux = np.absolute(Mat[ind].f[1])
         dXmax = (1/(aux))*dFmax
         
-        return 5.9*dFmax, dXmax
+        return dFmax, dXmax

@@ -31,6 +31,7 @@ class FuzzyMath:
         s.f[1] = self.f[1] + mf.f[1]
         s.f[2] = self.f[2] + mf.f[2]
         s.pertf = (self.pertf + mf.pertf) - (self.pertf * mf.pertf)
+        #s.f = np.sort(s.f)
         return s
     
     def  __sub__ (self, mf):

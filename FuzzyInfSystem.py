@@ -24,8 +24,8 @@ class FuzzyInfSystem:
             (self.uni_dis_X, self.stepX)= np.linspace(-dXmax, dXmax, num, endpoint=True, retstep=True, dtype=float)
             num+=1
         '''
-        self.uni_dis_F = np.arange(-dFmax, dFmax, self.precisaoF)
-        self.uni_dis_X = np.arange(-dXmax, dXmax, self.precisaoX)
+        self.uni_dis_F = np.arange(-self.dFmax, self.dFmax, self.precisaoF)
+        self.uni_dis_X = np.arange(-self.dXmax, self.dXmax, self.precisaoX)
 
     def pert_funcs_df(self):
         '''Função cria funções de pertinência triangulares'''
