@@ -88,7 +88,7 @@ class UniversoDiscurso:
             for k in range(self.nb):
                 if self.tb[k] != 0:                
                     Mat[k] = FuzzyMath([0,0,0])
-        
+        '''
         if self.ar == 'ativo' or self.ar=='reativo':            
             for k in range(self.nb):
                 DF.append([self.DP[k].f[0], self.DP[k].f[1], self.DP[k].f[2]])
@@ -96,6 +96,7 @@ class UniversoDiscurso:
             for k in range(self.nb):
                 if self.tb[k] == 2:                
                     Mat[k] = FuzzyMath([0,0,0])
+        '''
         '''
         aux = np.absolute(DF[:])
         ind  = np.unravel_index(np.argmax(aux, axis=None), aux.shape)
@@ -112,7 +113,7 @@ class UniversoDiscurso:
             print('parar')
 
         #fator = 6 - (self.iter/10)
-        fator = 1 #4.92 #3.22 #3.2
+        fator = 1#4.92 #3.22 #3.2
         # 6 barras  = 4.92
         # 14 barras = 3.22
         #if fator <= 5:
@@ -123,4 +124,4 @@ class UniversoDiscurso:
         aux = np.absolute(Mat[ind].f[1])
         dXmax = (1/(aux))*dFmax
         
-        return 5.9*dFmax, dXmax
+        return dFmax, dXmax

@@ -23,10 +23,10 @@ log.open_file()
 #filein = 'sis6_2.dat'
 #
 #filein = 'sis2.dat'
-#filein = 'sis3_2.dat' #fator = 1
+filein = 'sis3_2.dat' #fator = 1
 #filein = 'sis6_vbcte.dat' #fator = 4.92 
 #filein = 'sis13.dat'
-filein = 'sis14.dat'  #fator = 3.22 ou 3.24
+#filein = 'sis14.dat'  #fator = 3.22 ou 3.24
 
 # Instancia objeto dados
 d = DadosEntrada('entradas/{0}'.format(filein))
