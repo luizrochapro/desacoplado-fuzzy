@@ -16,6 +16,15 @@ import matplotlib.pyplot as plt
 log = Log('saida.log')
 log.open_file()
 
+def multDisp(d,v):
+    aux = np.zeros((1,3))
+    if d < 0:
+        aux[0,0] = v[2] 
+        aux[0,1] = v[1]
+        aux[0,2] = v[0]
+        return d*aux
+    return d*v
+
 #Dados de entrada
 #filein = 'sis6.dat'
 #filein = 'sis6_varang.dat'
@@ -23,11 +32,12 @@ log.open_file()
 #filein = 'sis6_2.dat'
 #
 #filein = 'sis2.dat'
-#filein = 'sis3_2.dat' #fator = 1
+filein = 'sis3_2.dat' #fator = 1
 #filein = 'sis6_vbcte.dat' #fator = 4.92 
 #filein = 'sis13.dat'
 #filein = 'sis14.dat'  #fator = 3.22 ou 3.24
-filein ='sis14_5.dat'
+#filein ='sis14_5.dat'
+#filein = 'sis3_3.dat' #fator = 1
 
 # Instancia objeto dados
 d = DadosEntrada('entradas/{0}'.format(filein))
@@ -456,6 +466,7 @@ plt.show()
 x = np.arange(len(DPAcum))
 plt.plot(x, DPAcum, 'b', linewidth=1.5)
 plt.title('DP')
+plt.xlabel('iterações')
 plt.show()
 
 y = np.arange(len(DXPAcum))
@@ -466,6 +477,7 @@ plt.show()
 x = np.arange(len(DQAcum))
 plt.plot(x, DQAcum, 'b', linewidth=1.5)
 plt.title('DQ')
+plt.xlabel('iterações')
 plt.show()
 
 y = np.arange(len(DXQAcum))
@@ -477,6 +489,204 @@ plt.show()
 # OBS: Pliq de barras PV e PQ, e Qliq de barras PQ, são dados do problema
 # mas sãoo aqui recalculados para se certificar que os resultados obtidos na
 # solução do subsistema 1 estáo corretos (se igual aos dados -> ok)
+
+# derivadas parciais para fluxo ativo
+dPkmdVda = np.zeros((4,d.nr))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    dPkmdVda[0,m] = 2 * d.vb[i,1] * gkm[m] - akm[m] * d.vb[k,1] * (bkm[m] * np.sin(d.ab[i,1]-d.ab[k,1]) + gkm[m] * np.cos(d.ab[i,1]-d.ab[k,1])) # derivada / Vi
+    dPkmdVda[1,m] = -akm[m]*d.vb[i,1] * (gkm[m] * np.cos(d.ab[i,1]-d.ab[k,1]) + bkm[m] * np.sin(d.ab[i,1]-d.ab[k,1]))      # derivada / Vk
+    dPkmdVda[2,m] = -akm[m] * d.vb[i,1] * d.vb[k,1] * (-1*gkm[m] * np.sin(d.ab[i,1]-d.ab[k,1]) + bkm[m] * np.cos(d.ab[i,1]-d.ab[k,1]))              # derivada / theta i
+    dPkmdVda[3,m] = -akm[m] * d.vb[i,1] * d.vb[k,1] * (gkm[m] * np.sin(d.ab[i,1]-d.ab[k,1]) - bkm[m] * np.cos(d.ab[i,1]-d.ab[k,1]))               # derivada / theta k
+
+dPmkdVda = np.zeros((4,d.nr))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    dPmkdVda[0,m] = - akm[m] * d.vb[k,1] * (-bkm[m] * np.sin(d.ab[i,1]-d.ab[k,1]) + gkm[m] * np.cos(d.ab[i,1]-d.ab[k,1])) # derivada / Vi
+    dPmkdVda[1,m] = 2*gkm[m]*np.square(akm[m])*d.vb[k,1] - akm[m]*d.vb[i,1] * (gkm[m] * np.cos(d.ab[i,1]-d.ab[k,1]) - bkm[m] * np.sin(d.ab[i,1]-d.ab[k,1]))      # derivada / Vk
+    dPmkdVda[2,m] = -akm[m] * d.vb[i,1] * d.vb[k,1] * (-1*gkm[m] * np.sin(d.ab[i,1]-d.ab[k,1]) - bkm[m] * np.cos(d.ab[i,1]-d.ab[k,1]))              # derivada / theta i
+    dPmkdVda[3,m] = -akm[m] * d.vb[i,1] * d.vb[k,1] * (gkm[m] * np.sin(d.ab[i,1]-d.ab[k,1]) + bkm[m] * np.cos(d.ab[i,1]-d.ab[k,1]))               # derivada / theta k
+
+dQkmdVda = np.zeros((4,d.nr))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    dQkmdVda[0,m] = -2 * d.vb[i,1] * (bkm[m] + bsh_km[m]) - akm[m] * d.vb[k,1] * (gkm[m] * np.sin(d.ab[i,1]-d.ab[k,1]) - bkm[m] * np.cos(d.ab[i,1]-d.ab[k,1])) # derivada / Vi
+    dQkmdVda[1,m] = -akm[m] * d.vb[i,1] * (gkm[m] * np.sin(d.ab[i,1]-d.ab[k,1]) - bkm[m] * np.cos(d.ab[i,1]-d.ab[k,1])) # derivada / Vk        # derivada / Vk
+    dQkmdVda[2,m] = -akm[m] * d.vb[i,1] * d.vb[k,1] * (gkm[m] * np.cos(d.ab[i,1]-d.ab[k,1]) + bkm[m] * np.sin(d.ab[i,1]-d.ab[k,1]))                # derivada / theta i
+    dQkmdVda[3,m] = -akm[m] * d.vb[i,1] * d.vb[k,1] * (-gkm[m] * np.cos(d.ab[i,1]-d.ab[k,1]) - bkm[m] * np.sin(d.ab[i,1]-d.ab[k,1]))                 # derivada / theta k
+
+dQmkdVda = np.zeros((4,d.nr))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    dQmkdVda[0,m] = akm[m] * d.vb[k,1] * (gkm[m] * np.sin(d.ab[i,1]-d.ab[k,1]) + bkm[m] * np.cos(d.ab[i,1]-d.ab[k,1])) # derivada / Vi
+    dQmkdVda[1,m] = -2*np.square(akm[m]) * d.vb[k,1] * (bkm[m]+bsh_km[m]) + akm[m]* d.vb[i,1]*(gkm[m] * np.sin(d.ab[i,1]-d.ab[k,1]) + bkm[m] * np.cos(d.ab[i,1]-d.ab[k,1])) # derivada / Vk        # derivada / Vk
+    dQmkdVda[2,m] = akm[m] * d.vb[i,1] * d.vb[k,1] * (gkm[m] * np.cos(d.ab[i,1]-d.ab[k,1]) - bkm[m] * np.sin(d.ab[i,1]-d.ab[k,1]))                # derivada / theta i
+    dQmkdVda[3,m] = akm[m] * d.vb[i,1] * d.vb[k,1] * (-gkm[m] * np.cos(d.ab[i,1]-d.ab[k,1]) + bkm[m] * np.sin(d.ab[i,1]-d.ab[k,1]))                 # derivada / theta k
+
+# criar os vetores de imprecisao de tensão e angulo  deltaTheta e deltaAngulo fuzzy
+dvf = np.zeros((d.nb,3))
+for k in range(d.nb):
+    dvf[k,0] = d.vb[k,0] - d.vb[k,1]
+    dvf[k,1] = d.vb[k,1] - d.vb[k,1]
+    dvf[k,2] = d.vb[k,2] - d.vb[k,1]
+
+dangf = np.zeros((d.nb,3))
+for k in range(d.nb):
+    dangf[k,0] = d.ab[k,0] - d.ab[k,1]
+    dangf[k,1] = d.ab[k,1] - d.ab[k,1]
+    dangf[k,2] = d.ab[k,2] - d.ab[k,1]
+
+#calculo das distribuições do fluxo de potencia ativa
+dPik = np.zeros((d.nr,3))
+aux = np.zeros((1,3))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    #dPik[m,:] = dPdVda[0,m]*dvf[i,:] + dPdVda[1,m]*dvf[k,:] + dPdVda[2,m]*dangf[i,:] + dPdVda[3,m]*dangf[k,:]
+    dPik[m,:] = multDisp(dPkmdVda[0,m],dvf[i,:]) + multDisp(dPkmdVda[1,m],dvf[k,:]) + multDisp(dPkmdVda[2,m],dangf[i,:]) + multDisp(dPkmdVda[3,m],dangf[k,:])
+    #dPik[m,:] = multDisp(dPkmdVda[0,m],d.vb[i,:]) + multDisp(dPkmdVda[1,m],d.vb[k,:]) + multDisp(dPkmdVda[2,m],d.ab[i,:]) + multDisp(dPkmdVda[3,m],d.ab[k,:])
+    #testa se está com valores invertidos e corrigi
+    #if dPik[m,2] < dPik[m,0]:
+    #    aux[0,0] = dPik[m,2] 
+    #    aux[0,1] = dPik[m,1] 
+    #    aux[0,2] = dPik[m,0]
+    #    dPik[m,:] = aux
+
+#calculo das distribuições do fluxo de potencia ativa
+dPki = np.zeros((d.nr,3))
+aux = np.zeros((1,3))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    #dPik[m,:] = dPdVda[0,m]*dvf[i,:] + dPdVda[1,m]*dvf[k,:] + dPdVda[2,m]*dangf[i,:] + dPdVda[3,m]*dangf[k,:]
+    dPki[m,:] = multDisp(dPmkdVda[0,m],dvf[i,:]) + multDisp(dPmkdVda[1,m],dvf[k,:]) + multDisp(dPmkdVda[2,m],dangf[i,:]) + multDisp(dPmkdVda[3,m],dangf[k,:])
+    #dPki[m,:] = multDisp(dPmkdVda[0,m],d.vb[i,:]) + multDisp(dPmkdVda[1,m],d.vb[k,:]) + multDisp(dPmkdVda[2,m],d.ab[i,:]) + multDisp(dPmkdVda[3,m],d.ab[k,:])
+
+
+#calculo das distribuições do fluxo de potencia reativa
+dQik = np.zeros((d.nr,3))
+aux = np.zeros((1,3))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    #dQik[m,:] = dQdVda[0,m]*dvf[i,:] + dQdVda[1,m]*dvf[k,:] + dQdVda[2,m]*dangf[i,:] + dQdVda[3,m]*dangf[k,:]
+    dQik[m,:] = multDisp(dQkmdVda[0,m],dvf[i,:]) + multDisp(dQkmdVda[1,m],dvf[k,:]) + multDisp(dQkmdVda[2,m],dangf[i,:]) + multDisp(dQkmdVda[3,m],dangf[k,:])
+    #testa se está com valores invertidos e corrigi
+    #if dQik[m,2] < dQik[m,0]:
+    #    aux[0,0] = dQik[m,2] 
+    #    aux[0,1] = dQik[m,1] 
+    #    aux[0,2] = dQik[m,0]
+    #    dQik[m,:] = aux  
+
+dQki = np.zeros((d.nr,3))
+aux = np.zeros((1,3))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    #dQik[m,:] = dQdVda[0,m]*dvf[i,:] + dQdVda[1,m]*dvf[k,:] + dQdVda[2,m]*dangf[i,:] + dQdVda[3,m]*dangf[k,:]
+    dQki[m,:] = multDisp(dQmkdVda[0,m],dvf[i,:]) + multDisp(dQmkdVda[1,m],dvf[k,:]) + multDisp(dQmkdVda[2,m],dangf[i,:]) + multDisp(dQmkdVda[3,m],dangf[k,:])
+
+#calculo do fluxo fuzzy nos ramos
+Pik = np.zeros((d.nr,3))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    #Pik[m,:] = Pij[i,k] + dPik[m]*d.sbase   
+    Pik[m,:] = dPik[m]*d.sbase   
+
+Pki = np.zeros((d.nr,3))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    #Pki[m,:] = Pij[k,i] + dPki[m]*d.sbase 
+    Pki[m,:] = dPki[m]*d.sbase 
+
+#calculo do fluxo fuzzy nos ramos
+Qik = np.zeros((d.nr,3))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    #Qik[m,:] = Qij[i,k] + dQik[m]*sbase 
+    Qik[m,:] = dQik[m]*d.sbase 
+
+Qki = np.zeros((d.nr,3))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    #Qki[m,:] = Qij[k,i] + dQki[m]*sbase 
+    Qki[m,:] = dQik[m]*d.sbase 
+
+#calculo das derivadas parciais da perdas 
+dPerdasik = np.zeros((4,d.nr))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    dPerdasik[0,m] = 2*d.vb[i][1]*gkm[m] -2*d.vb[k][1]*gkm[m]*np.square(akm[m])*np.cos(d.ab[i][1]-d.ab[k][1])
+    dPerdasik[1,m] = 2*d.vb[k][1]*gkm[m]*np.square(akm[k]) -2*d.vb[i][1]*gkm[m]*np.square(akm[m])*np.cos(d.ab[i][1]-d.ab[k][1])
+    dPerdasik[2,m] = 2*gkm[m]*np.square(akm[m])*d.vb[i][1]*d.vb[k][1]*np.sin(d.ab[i][1]-d.ab[k][1])
+    dPerdasik[3,m] = -2*gkm[m]*np.square(akm[m])*d.vb[i][1]*d.vb[k][1]*np.sin(d.ab[i][1]-d.ab[k][1])
+
+
+dPe = np.zeros((d.nr,3))
+aux = np.zeros((1,3))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    i -= 1
+    k -= 1
+    dPe[m,:] = multDisp(dPerdasik[0,m],dvf[i,:]) + multDisp(dPerdasik[1,m],dvf[k,:]) + multDisp(dPerdasik[2,m],dangf[i,:]) + multDisp(dPerdasik[3,m],dangf[k,:])
+
+#calculo das perdas ativas
+PerdasPikM = np.zeros((d.nr,3))
+for m in range(d.nr):
+    i = d.bini[m]
+    k = d.bfim[m]
+    #i -= 1
+    #k -= 1
+    #PerdasPikM[m,:] = Lpij[m] + dPe[m]*sbase   
+    PerdasPikM[m,:] = dPe[m]*d.sbase   
+
+print('Pki')
+print(Pki+[[7.6,7.6,7.6],[2.55,2.55,2.55],[12.63,12.63,12.63]])
+print('Pik')
+print(Pki+[[-7.55,-7.55,-7.55],[-2.53,-2.53,-2.53],[-12.47,-12.47,-12.47]])
+print('Qki')
+print(Qki+[[-0.88,-0.88,-0.88],[-1.47,-1.47,-1.47],[0.53,0.53,0.53]])
+print('Qik')
+print(Qik+[[-0.53,-0.53,-0.53],[-2.3,-2.3,-2.3],[-0.88,-0.88,-0.88]])
+print('Perdasik')
+print(PerdasPikM+[[0.0578,0.0578,0.0578],[0.0136,0.0136,0.0136],[0.1619,0.1619,0.1619]])
+print('fim')
 '''
 Qsh_k = np.zeros((d.nb,1))
 Pkm = np.zeros((d.nr,1))
