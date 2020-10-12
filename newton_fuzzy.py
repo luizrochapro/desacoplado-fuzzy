@@ -3,7 +3,8 @@ import numpy as np
 from Imprimir import *
 from FuzzyMath import *
 
-filein = 'sis3_2.dat'
+#filein = 'sis3_2.dat'
+filein = 'sis3_3.dat'
 #filein = 'sis13_2.dat'
 #filein = 'sis13.dat'
 #filein = 'sis6.dat'
